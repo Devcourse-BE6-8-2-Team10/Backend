@@ -42,7 +42,10 @@ dependencies {
     testImplementation ("org.springframework:spring-messaging")
     testImplementation ("org.springframework:spring-websocket")
 
-    // ✅ JWT 관련 추가
+    // Swagger UI 및 OpenAPI 3.0 문서화
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+
+    // JWT 관련 추가
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
