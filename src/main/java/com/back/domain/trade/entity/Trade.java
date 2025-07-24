@@ -33,6 +33,7 @@ public class Trade extends BaseEntity {
 
 
     public Trade( Member seller, Member buyer, int price, TradeStatus status) {
+
         this.seller = seller;
         this.buyer = buyer;
         this.price = price;
