@@ -1,6 +1,7 @@
 package com.back.domain.files.files.entity;
 
-
+import com.back.domain.post.entity.Post;
+import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

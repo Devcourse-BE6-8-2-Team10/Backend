@@ -1,6 +1,7 @@
 package com.back.domain.chat.chat.entity;
 
 import com.back.domain.member.entity.Member;
+import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;

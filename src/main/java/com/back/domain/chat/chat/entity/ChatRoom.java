@@ -1,5 +1,6 @@
 package com.back.domain.chat.chat.entity;
 
+import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
