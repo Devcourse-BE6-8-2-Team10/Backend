@@ -1,12 +1,12 @@
 package com.back.domain.post.entity;
 
+import com.back.domain.files.entity.Files;
 import com.back.domain.member.entity.Member;
 import com.back.domain.chat.chat.entity.ChatRoom;
 import com.back.domain.trade.entity.Trade;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
