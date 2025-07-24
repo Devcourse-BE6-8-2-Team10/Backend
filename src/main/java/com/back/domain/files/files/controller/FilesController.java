@@ -23,7 +23,11 @@ public class FilesController {
             @PathVariable @Positive long postId,
             @RequestPart("files") MultipartFile[] files
     ) {
-        List<FileUploadResponseDto> response = filesService.uploadFiles(postId, files);
-        return new RsData<>("200", "파일 업로드 성공", response);
+        try {
+            List<FileUploadResponseDto> response = filesService.uploadFiles(postId, files);
+            return new RsData<>("200", "파일 업로드 성공", response);
+        } catch (Exception e) {
+            return new RsData<>("500", "파일 업로드 실패: " + e.getMessage(), null);
+        }
     }
 }
