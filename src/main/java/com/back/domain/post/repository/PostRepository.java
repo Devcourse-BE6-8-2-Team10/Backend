@@ -19,6 +19,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 상태 필터링 (사용할지 말지 모름)
     List<Post> findByStatus(Status status);
     // 키워드 검색 (사용할지 말지 모름)
-    @Query("SELECT p FROM Post p WHERE p.title LIKE %:keyword% OR p.description LIKE %:keyword%")
+    @Query("SELECT p FROM Post p WHERE p.title LIKE CONCAT('%', :keyword, '%') OR p.description LIKE CONCAT('%', :keyword, '%')")
     List<Post> searchByKeyword(String keyword);
 }
