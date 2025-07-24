@@ -49,8 +49,8 @@ public class Member extends BaseEntity {
         this.password = password;
         this.name = name;
         this.profileUrl = profileUrl;
-        this.role = Role.USER;  // 기본 역할은 USER
-        this.status = Status.ACTIVE;   // 기본 상태는 ACTIVE
+        this.role = (role != null) ? role : Role.USER;  // 기본 역할은 USER
+        this.status = (status != null) ? status : Status.ACTIVE;   // 기본 상태는 ACTIVE
     }
 
 }
