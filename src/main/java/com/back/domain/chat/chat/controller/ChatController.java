@@ -17,6 +17,7 @@ public class ChatController {
     @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
     public MessageDto sendMessage(MessageDto chatMessage) {
+        chatService.saveMessage(chatMessage);
         return chatMessage;
     }
 }
