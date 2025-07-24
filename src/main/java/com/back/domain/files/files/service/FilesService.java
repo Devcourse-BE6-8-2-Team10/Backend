@@ -72,4 +72,20 @@ public class FilesService {
         }
         return responseList;
     }
+
+    public List<FileUploadResponseDto> getFilesByPostId(Long postId) {
+        List<Files> files = filesRepository.findByPostIdAndDeletedAtIsNullOrderBySortOrderAsc(postId);
+
+        return files.stream()
+                .map(file -> new FileUploadResponseDto(
+                        file.getId(),
+                        file.getPost().getId(),
+                        file.getFileName(),
+                        file.getFileType(),
+                        file.getFileSize(),
+                        file.getFileUrl(),
+                        file.getSortOrder(),
+                        file.getCreatedAt()
+                )).toList();
+    }
 }

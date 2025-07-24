@@ -17,7 +17,7 @@ public class FilesController {
 
     private final FilesService filesService;
 
-    // 파일 업로드 API(게시글 저장 -> postId 받음, 이미지 저장)
+    // 파일 업로드 (게시글 저장 -> postId 받음, 이미지 저장)
     @PostMapping("/{postId}/files")
     public RsData<List<FileUploadResponseDto>> uploadFiles(
             @PathVariable @Positive long postId,
@@ -30,4 +30,12 @@ public class FilesController {
             return new RsData<>("500", "파일 업로드 실패: " + e.getMessage(), null);
         }
     }
+
+    // 파일 조회
+    @GetMapping("/{postId}/files")
+    public RsData<List<FileUploadResponseDto>> getFilesByPostId(@PathVariable Long postId) {
+        List<FileUploadResponseDto> result = filesService.getFilesByPostId(postId);
+        return new RsData<>("200", "파일 목록 조회 성공", result);
+    }
+
 }
