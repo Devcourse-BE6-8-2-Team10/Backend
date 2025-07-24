@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public record TradeDto(
         @NonNull Long id,
-        @NonNull Long postId,
+        //@NonNull Long postId,
         @NonNull Long sellerId,
         @NonNull Long buyerId,
         @NonNull int price,
@@ -20,7 +20,7 @@ public record TradeDto(
 public TradeDto(Trade trade) {
         this(
             trade.getId(),
-            trade.getPost().getId(),
+            //trade.getPost().getId(),
             trade.getSeller().getId(),
             trade.getBuyer().getId(),
             trade.getPrice(),
