@@ -3,8 +3,11 @@ package com.back.domain.files.files.service;
 import com.back.domain.files.files.dto.FileUploadResponseDto;
 import com.back.domain.files.files.entity.Files;
 import com.back.domain.files.files.repository.FilesRepository;
+import com.back.domain.post.entity.Post;
+import com.back.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class FilesService {
 
     private final FilesRepository filesRepository;
@@ -23,36 +27,48 @@ public class FilesService {
 
         List<FileUploadResponseDto> responseList = new ArrayList<>();
 
-        int sortOrder = 1;
-        for (MultipartFile file : files) {
-            String fileName = file.getOriginalFilename();
-            String fileType = file.getContentType();
-            long fileSize = file.getSize();
+        if(files != null) {
+            int sortOrder = 1;
+            for (MultipartFile file : files) {
+                // 파일이 없는 경우 건너뜀
+                if (file.isEmpty()) {
+                    continue;
+                }
 
-            // TODO: 실제 파일 저장 후 URL 생성(임시 URL 사용)
-            String fileUrl = "http://example.com/uploads/test.png" + fileName;
+                // 파일명 검사
+                String fileName = file.getOriginalFilename();
+                if (fileName == null || fileName.trim().isEmpty()) {
+                    continue;
+                }
 
-            Files saved = filesRepository.save(
-                    Files.builder()
-                            .post(post)
-                            .fileName(fileName)
-                            .fileType(fileType)
-                            .fileSize(fileSize)
-                            .fileUrl(fileUrl)
-                            .sortOrder(sortOrder++)
-                            .build()
-            );
+                String fileType = file.getContentType();
+                long fileSize = file.getSize();
 
-            responseList.add(new FileUploadResponseDto(
-                    saved.getId(),
-                    post.getId(),
-                    saved.getFileName(),
-                    saved.getFileType(),
-                    saved.getFileSize(),
-                    saved.getFileUrl(),
-                    saved.getSortOrder(),
-                    saved.getCreatedAt()
-            ));
+                // TODO: 실제 파일 저장 후 URL 생성(임시 URL 사용)
+                String fileUrl = "http://example.com/uploads/test.png" + fileName;
+
+                Files saved = filesRepository.save(
+                        Files.builder()
+                                .post(post)
+                                .fileName(fileName)
+                                .fileType(fileType)
+                                .fileSize(fileSize)
+                                .fileUrl(fileUrl)
+                                .sortOrder(sortOrder++)
+                                .build()
+                );
+
+                responseList.add(new FileUploadResponseDto(
+                        saved.getId(),
+                        post.getId(),
+                        saved.getFileName(),
+                        saved.getFileType(),
+                        saved.getFileSize(),
+                        saved.getFileUrl(),
+                        saved.getSortOrder(),
+                        saved.getCreatedAt()
+                ));
+            }
         }
         return responseList;
     }
