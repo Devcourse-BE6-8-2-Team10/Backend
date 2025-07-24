@@ -18,7 +18,7 @@ public class Message extends BaseEntity {
     private ChatRoom chatRoom;
 
     @ManyToOne
-    private Member Senter;
+    private Member sender;
 
     private String content;
 
