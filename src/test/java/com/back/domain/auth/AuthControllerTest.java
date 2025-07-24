@@ -3,6 +3,7 @@ package com.back.domain.auth;
 import com.back.domain.auth.controller.AuthController;
 import com.back.domain.auth.dto.request.MemberSignupRequest;
 import com.back.domain.member.service.MemberService;
+import com.back.global.rsData.ResultCode;
 import com.back.global.rsData.RsData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,8 +40,8 @@ public class AuthControllerTest {
         RsData<String> rs = response.getBody();
 
         // then
-        assertThat(rs).isNotNull();
-        assertThat(rs.resultCode()).isEqualTo("200-1");
+        assertThat(rs.resultCode()).isEqualTo(ResultCode.SIGNUP_SUCCESS.code());
+        assertThat(rs.msg()).isEqualTo(ResultCode.SIGNUP_SUCCESS.message());
 
         // memberService.signup()이 정확히 한 번 호출되었는지 확인
         verify(memberService, times(1)).signup(request);
