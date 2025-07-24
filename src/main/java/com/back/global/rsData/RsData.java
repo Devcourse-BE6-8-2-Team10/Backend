@@ -7,7 +7,7 @@ public record RsData<T>(
         @NonNull String resultCode,
         @JsonIgnore int statusCode,
         @NonNull String msg,
-        @NonNull T data
+        T data
 ) {
     public RsData(String resultCode, String msg) {
         this(resultCode, msg, null);
