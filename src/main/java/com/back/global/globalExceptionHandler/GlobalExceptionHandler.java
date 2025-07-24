@@ -40,10 +40,13 @@ public class GlobalExceptionHandler {
         String message = ex.getConstraintViolations()
                 .stream()
                 .map(violation -> {
-                    String field = violation.getPropertyPath().toString().split("\\.", 2)[1];
+                    String[] pathParts = violation.getPropertyPath().toString().split("\\.", 2);
+                    String field = pathParts.length > 1 ? pathParts[1] : violation.getPropertyPath().toString();
                     String[] messageTemplateBits = violation.getMessageTemplate()
                             .split("\\.");
-                    String code = messageTemplateBits[messageTemplateBits.length - 2];
+                    String code = messageTemplateBits.length >= 2
+                            ? messageTemplateBits[messageTemplateBits.length - 2]
+                            : "Unknown";
                     String _message = violation.getMessage();
 
                     return "%s-%s-%s".formatted(field, code, _message);
