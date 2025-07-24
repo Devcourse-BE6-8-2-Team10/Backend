@@ -3,6 +3,8 @@ package com.back.domain.chat.chat.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 public class MessageDto {
@@ -28,6 +30,6 @@ public class MessageDto {
 
     @Override
     public int hashCode() {
-        return sender.hashCode() + content.hashCode();
+        return Objects.hash(sender, content);
     }
 }
