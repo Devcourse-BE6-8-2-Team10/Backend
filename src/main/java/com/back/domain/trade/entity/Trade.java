@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Trade extends BaseEntity {
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "post_id", nullable = false)
-//    private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
@@ -32,7 +32,7 @@ public class Trade extends BaseEntity {
     private TradeStatus status;
 
     public Trade( Member seller, Member buyer, int price, TradeStatus status) {
-//        this.post = post;
+        this.post = post;
         this.seller = seller;
         this.buyer = buyer;
         this.price = price;

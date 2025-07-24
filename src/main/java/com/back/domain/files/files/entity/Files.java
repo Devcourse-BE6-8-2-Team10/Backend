@@ -14,9 +14,9 @@ import lombok.*;
 public class Files extends BaseEntity {
 
     // 연관 게시글 참조
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "post_id", nullable = false)
-//    private Post post;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @Column(nullable = false)
     private String fileName;
