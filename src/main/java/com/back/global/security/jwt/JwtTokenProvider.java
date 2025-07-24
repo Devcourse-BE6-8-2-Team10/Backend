@@ -3,18 +3,18 @@ package com.back.global.security.jwt;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final Key key;
+    private final SecretKey key;
     private final long accessTokenValidity;
     private final long refreshTokenValidity;
 
@@ -23,7 +23,7 @@ public class JwtTokenProvider {
             @Value("${jwt.access-token-validity}") long accessTokenValidity,
             @Value("${jwt.refresh-token-validity}") long refreshTokenValidity
     ) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         this.accessTokenValidity = accessTokenValidity;
         this.refreshTokenValidity = refreshTokenValidity;
     }
@@ -31,9 +31,9 @@ public class JwtTokenProvider {
     public String generateAccessToken(String email) {
         Date now = new Date();
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + accessTokenValidity))
+                .subject(email)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + accessTokenValidity))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -41,31 +41,35 @@ public class JwtTokenProvider {
     public String generateRefreshToken(String email) {
         Date now = new Date();
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + refreshTokenValidity))
+                .subject(email)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + refreshTokenValidity))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String getEmailFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new RuntimeException("유효하지 않은 토큰입니다", e);
+        }
+
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Jwts.parser()
+                    .verifyWith(key)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // 유효하지 않은 토큰
             return false;
         }
     }
