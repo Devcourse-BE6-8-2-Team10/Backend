@@ -3,6 +3,8 @@ package com.back.domain.files.files.service;
 import com.back.domain.files.files.dto.FileUploadResponseDto;
 import com.back.domain.files.files.entity.Files;
 import com.back.domain.files.files.repository.FilesRepository;
+import com.back.domain.post.entity.Post;
+import com.back.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
