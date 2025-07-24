@@ -43,7 +43,7 @@ dependencies {
     testImplementation ("org.springframework:spring-websocket")
 
     // Swagger UI 및 OpenAPI 3.0 문서화
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.10")
 
     // JWT 관련 추가
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
