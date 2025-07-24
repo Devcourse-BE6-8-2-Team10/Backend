@@ -39,7 +39,6 @@ public class SecurityConfig {
                         .requestMatchers("/app/**").permitAll()      // 메시지 전송 경로 허용
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.disable())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)); // H2 콘솔 접근 허용
 
