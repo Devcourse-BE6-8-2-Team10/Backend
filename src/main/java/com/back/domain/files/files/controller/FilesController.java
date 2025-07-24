@@ -2,6 +2,7 @@ package com.back.domain.files.files.controller;
 
 import com.back.domain.files.files.dto.FileUploadResponseDto;
 import com.back.domain.files.files.service.FilesService;
+import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,6 @@ public class FilesController {
             @RequestPart("files") MultipartFile[] files
     ) {
         List<FileUploadResponseDto> response = filesService.uploadFiles(postId, files);
-        return RsData.of("200", "파일 업로드 성공", response);
+        return new RsData<>("200", "파일 업로드 성공", response);
     }
 }
