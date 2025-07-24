@@ -3,18 +3,19 @@ package com.back.domain.trade.dto;
 
 import com.back.domain.trade.entity.Trade;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.NonNull;
 
 import java.time.LocalDateTime;
 
 public record TradeDto(
-    Long id,
-    Long postId,
-    Long sellerId,
-    Long buyerId,
-    int price,
-    String status,
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime createdAt
+        @NonNull Long id,
+        @NonNull Long postId,
+        @NonNull Long sellerId,
+        @NonNull Long buyerId,
+        @NonNull int price,
+        @NonNull String status,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        @NonNull LocalDateTime createdAt
 ) {
 public TradeDto(Trade trade) {
         this(
