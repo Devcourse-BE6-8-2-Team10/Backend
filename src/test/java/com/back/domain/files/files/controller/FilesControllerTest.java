@@ -38,7 +38,7 @@ public class FilesControllerTest {
     @Test
     @DisplayName("파일 업로드 성공")
     @WithMockUser(username = "test-user", roles = "USER")
-    void uploadFilesSuccess() throws Exception {
+    void t1() throws Exception {
         // 주입
         MockMultipartFile file1 = new MockMultipartFile(
                 "files", "test1.png", "image/png", "fake-image-content".getBytes());
