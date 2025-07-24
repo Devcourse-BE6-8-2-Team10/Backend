@@ -11,5 +11,5 @@ public record FileUploadResponseDto (
      long fileSize,
      String fileUrl,
      int sortOrder,
-     LocalDateTime createdAt,
+     LocalDateTime createdAt
 ) {}
