@@ -2,14 +2,11 @@ package com.back.domain.files.files.entity;
 
 import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name = "files")
@@ -27,12 +24,12 @@ public class Files extends BaseEntity {
     private String fileType;
 
     @Column(nullable = false)
-    private int fileSize;
+    private long fileSize;
 
     @Column(nullable = false)
     private String fileUrl;
 
     // 정렬 순서
     @Column(nullable = false)
-    private Integer sortOrder;
+    private int sortOrder;
 }
