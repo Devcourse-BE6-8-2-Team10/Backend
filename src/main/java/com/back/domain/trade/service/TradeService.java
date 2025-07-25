@@ -28,7 +28,7 @@ public class TradeService {
             throw new ServiceException("400-1", "이미 판매된 게시글입니다.");
         }
 
-        if (post.getMember().getId() == buyerId) {
+        if (post.getMember().getId().equals(buyerId)) {
             throw new ServiceException("403-1", "자신의 게시글은 구매할 수 없습니다.");
         }
 

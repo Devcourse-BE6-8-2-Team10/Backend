@@ -7,6 +7,8 @@ import com.back.global.rsData.RsData;
 import com.back.global.security.auth.MemberDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +23,7 @@ public class TradeController {
     private final TradeService tradeService;
 
     public record TradeCreateReqBody(
-            Long postId
+            @NotNull @Positive Long postId
     ) {}
     @PostMapping
     @Operation(summary = "거래 생성")
