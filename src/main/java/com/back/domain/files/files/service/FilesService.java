@@ -107,10 +107,10 @@ public class FilesService {
         Files file = filesRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다: " + fileId));
 
-        if (!(file.getPost().getId() == postId)) {
+        if (!file.getPost().getId().equals(postId)) {
             throw new IllegalArgumentException("해당 게시글에 속하지 않는 파일입니다: " + fileId);
         }
-        if (!(file.getPost().getMember().getId() == memberId)) {
+        if (!file.getPost().getMember().getId().equals(memberId)) {
             throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다. " + memberId);
         }
 
