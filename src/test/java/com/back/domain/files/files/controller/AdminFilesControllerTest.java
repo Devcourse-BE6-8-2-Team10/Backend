@@ -54,4 +54,26 @@ class AdminFileControllerTest {
                 .andExpect(jsonPath("$.data[0].fileName").value("test.png"))
                 .andExpect(jsonPath("$.data[1].fileName").value("doc.pdf"));
     }
+
+    @Test
+    @DisplayName("관리자 전체 파일 목록 조회 - 파일 없음")
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void getAllFiles_whenEmpty() throws Exception {
+        // given
+        RsData<List<FileUploadResponseDto>> emptyResponse = new RsData<>(
+                "200",
+                "등록된 파일이 없습니다.",
+                List.of()
+        );
+
+        Mockito.when(filesService.adminGetAllFiles()).thenReturn(emptyResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/admin/files"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200"))
+                .andExpect(jsonPath("$.msg").value("등록된 파일이 없습니다."))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
 }
