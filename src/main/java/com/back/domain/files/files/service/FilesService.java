@@ -122,6 +122,8 @@ public class FilesService {
 
     // 모든 파일 조회
     public RsData<List<FileUploadResponseDto>> adminGetAllFiles() {
+        // TODO: 추후 rq.getActor() 등을 통해 관리자 권한 확인 필요 및 구현
+
         List<Files> files = filesRepository.findAll();
 
         List<FileUploadResponseDto> result = files.stream()

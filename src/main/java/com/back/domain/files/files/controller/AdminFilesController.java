@@ -3,6 +3,8 @@ package com.back.domain.files.files.controller;
 import com.back.domain.files.files.dto.FileUploadResponseDto;
 import com.back.domain.files.files.service.FilesService;
 import com.back.global.rsData.RsData;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,12 +17,14 @@ import java.util.List;
 @RequestMapping("/api/admin/files")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")   // 관리자 권한
+@Tag(name = "파일 관리(관리자)", description = "관리자 전용 파일 관리 API")
 public class AdminFilesController {
 
     private final FilesService filesService;
 
     // 관리자용 파일 조회 API
     @GetMapping
+    @Operation(summary = "모든 파일 조회", description = "관리자가 모든 파일을 조회합니다")
     public RsData<List<FileUploadResponseDto>> getAllFiles() {
         return filesService.adminGetAllFiles();
     }
