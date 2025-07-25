@@ -31,4 +31,9 @@ public class Rq {
     public boolean isLogin() {
         return getMember() != null;
     }
+
+    public String getMemberRole() {
+        Member member = getMember();
+        return (member != null) ? member.getRole().name() : null;
+    }
 }
