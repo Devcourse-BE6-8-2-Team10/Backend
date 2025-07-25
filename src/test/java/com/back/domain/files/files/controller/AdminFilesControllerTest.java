@@ -9,6 +9,9 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -41,39 +44,37 @@ class AdminFilesControllerTest {
                 new FileUploadResponseDto(1L, 10L, "test.png", "image/png", 2048L, "http://example.com/test.png", 1, LocalDateTime.now()),
                 new FileUploadResponseDto(2L, 10L, "doc.pdf", "application/pdf", 4096L, "http://example.com/doc.pdf", 2, LocalDateTime.now())
         );
-        RsData<List<FileUploadResponseDto>> response = new RsData<>("200", "파일 목록 조회 성공", mockFileList);
+        Page<FileUploadResponseDto> page = new PageImpl(mockFileList, PageRequest.of(0, 10), mockFileList.size());
+        RsData<Page<FileUploadResponseDto>> response = new RsData<>("200", "파일 목록 조회 성공", page);
 
-        Mockito.when(filesService.adminGetAllFiles()).thenReturn(response);
+        Mockito.when(filesService.adminGetAllFiles(Mockito.any())).thenReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/admin/files"))
+        mockMvc.perform(get("/api/admin/files?page=0&size=10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200"))
                 .andExpect(jsonPath("$.msg").value("파일 목록 조회 성공"))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].fileName").value("test.png"))
-                .andExpect(jsonPath("$.data[1].fileName").value("doc.pdf"));
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].fileName").value("test.png"))
+                .andExpect(jsonPath("$.data.content[1].fileName").value("doc.pdf"));
     }
 
     @Test
-    @DisplayName("관리자 전체 파일 목록 조회 - 파일 없음")
+    @DisplayName("관리자 전체 파일 목록 조회 - 파일 없음(페이징)")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getAllFiles_whenEmpty() throws Exception {
         // given
-        RsData<List<FileUploadResponseDto>> emptyResponse = new RsData<>(
-                "200",
-                "등록된 파일이 없습니다.",
-                List.of()
-        );
+        Page<FileUploadResponseDto> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 2), 0);
+        RsData<Page<FileUploadResponseDto>> response = new RsData<>("200", "등록된 파일이 없습니다.", emptyPage);
 
-        Mockito.when(filesService.adminGetAllFiles()).thenReturn(emptyResponse);
+        Mockito.when(filesService.adminGetAllFiles(Mockito.any())).thenReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/admin/files"))
+        mockMvc.perform(get("/api/admin/files?page=0&size=2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200"))
                 .andExpect(jsonPath("$.msg").value("등록된 파일이 없습니다."))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content").isEmpty());
     }
 }

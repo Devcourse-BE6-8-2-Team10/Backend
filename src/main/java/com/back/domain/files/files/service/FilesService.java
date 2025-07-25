@@ -7,6 +7,8 @@ import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -121,13 +123,15 @@ public class FilesService {
     // =================== 관리자 전용 서비스 구역 ===================
 
     // 모든 파일 조회
-    public RsData<List<FileUploadResponseDto>> adminGetAllFiles() {
+    public RsData<Page<FileUploadResponseDto>> adminGetAllFiles(Pageable pageable) {
         // TODO: 추후 rq.getActor() 등을 통해 관리자 권한 확인 필요 및 구현
+//        if (!rq.getActor().isAdmin()) {
+//            return new RsData<>("403", "관리자 권한이 필요합니다.", null);
+//        }
 
-        List<Files> files = filesRepository.findAll();
+        Page<Files> filesPage = filesRepository.findAll(pageable);
 
-        List<FileUploadResponseDto> result = files.stream()
-                .map(file -> new FileUploadResponseDto(
+        Page<FileUploadResponseDto> dtoPage = filesPage.map(file -> new FileUploadResponseDto(
                         file.getId(),
                         file.getPost().getId(),
                         file.getFileName(),
@@ -136,9 +140,8 @@ public class FilesService {
                         file.getFileUrl(),
                         file.getSortOrder(),
                         file.getCreatedAt()
-                ))
-                .toList();
+                ));
 
-        return new RsData<>("200", result.isEmpty() ? "등록된 파일이 없습니다." : "파일 목록 조회 성공", result);
+        return new RsData<>("200", dtoPage.isEmpty() ? "등록된 파일이 없습니다." : "파일 목록 조회 성공", dtoPage);
     }
 }
