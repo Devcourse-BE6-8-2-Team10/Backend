@@ -118,4 +118,25 @@ public class FilesService {
         return new RsData("200", "파일 삭제 성공", null);
     }
 
+    // =================== 관리자 전용 서비스 구역 ===================
+
+    // 모든 파일 조회
+    public RsData<List<FileUploadResponseDto>> adminGetAllFiles() {
+        List<Files> files = filesRepository.findAll();
+
+        List<FileUploadResponseDto> result = files.stream()
+                .map(file -> new FileUploadResponseDto(
+                        file.getId(),
+                        file.getPost().getId(),
+                        file.getFileName(),
+                        file.getFileType(),
+                        file.getFileSize(),
+                        file.getFileUrl(),
+                        file.getSortOrder(),
+                        file.getCreatedAt()
+                ))
+                .toList();
+
+        return new RsData<>("200", result.isEmpty() ? "등록된 파일이 없습니다." : "파일 목록 조회 성공", result);
+    }
 }
