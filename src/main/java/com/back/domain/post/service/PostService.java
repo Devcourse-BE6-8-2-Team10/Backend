@@ -1,3 +1,4 @@
+// src/main/java/com/back/domain/post/service/PostService.java
 package com.back.domain.post.service;
 
 import com.back.domain.post.dto.PostRequestDTO;
@@ -16,10 +17,14 @@ public class PostService {
 
     @Transactional
     public PostDetailDTO createPost(PostRequestDTO dto) {
+        // 카테고리 변환 예외 처리
+        Post.Category category = Post.Category.from(dto.category())
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 카테고리입니다."));
+
         Post post = Post.builder()
                 .title(dto.title())
                 .description(dto.description())
-                .category(Post.Category.valueOf(dto.category()))
+                .category(category)
                 .fileUrl(dto.fileUrl())
                 .price(dto.price())
                 .status(Post.Status.SALE)
