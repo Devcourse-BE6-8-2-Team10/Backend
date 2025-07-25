@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface FilesRepository extends JpaRepository<Files, Long> {
-    List<Files> findByPostIdAndDeletedAtIsNullOrderBySortOrderAsc(Long postId);
+    List<Files> findByPostIdOrderBySortOrderAsc(Long postId);
+
 }
