@@ -63,13 +63,13 @@ public class AuthController {
     @GetMapping("/me")
     @Operation(summary = "로그인 사용자 정보 조회", description = "유효한 JWT 토큰을 통해 현재 인증된 사용자 정보를 조회합니다.")
     public ResponseEntity<RsData<MemberInfoResponse>> me(Authentication authentication) {
-        MemberDetails memberDetails = (MemberDetails) authentication.getPrincipal();
-        Member member = memberDetails.getMember();
-        if (member == null) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof MemberDetails memberDetails)) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body(new RsData<>(ResultCode.UNAUTHORIZED, "로그인된 사용자가 없습니다."));
         }
+
+        Member member = memberDetails.getMember();
         MemberInfoResponse response = MemberInfoResponse.fromEntity(member);
 
         return ResponseEntity.ok(new RsData<>(ResultCode.GET_ME_SUCCESS, "로그인 사용자 정보 조회 성공", response));
