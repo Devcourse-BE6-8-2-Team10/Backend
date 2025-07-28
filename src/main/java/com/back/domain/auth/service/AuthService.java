@@ -68,6 +68,7 @@ public class AuthService {
     }
 
     // Access Token 재발급
+    @Transactional
     public TokenReissueResponse reissueAccessToken(TokenReissueRequest request) {
         String refreshToken = request.refreshToken();
 
