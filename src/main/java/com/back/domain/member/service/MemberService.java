@@ -61,7 +61,11 @@ public class MemberService {
         String accessToken = jwtTokenProvider.generateAccessToken(member);
         String refreshToken = jwtTokenProvider.generateRefreshToken(member);
 
-        // 4. DTO 응답 반환
+        // 4. 리프레시 토큰 저장
+        member.updateRefreshToken(refreshToken);
+        memberRepository.save(member);
+
+        // 5. DTO 응답 반환
         return new MemberLoginResponse(accessToken, refreshToken, MemberInfoResponse.fromEntity(member));
     }
 

@@ -58,4 +58,9 @@ public class Member extends BaseEntity {
         this.refreshToken = null;
     }
 
+    // 리프레시 토큰을 설정함
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
 }
