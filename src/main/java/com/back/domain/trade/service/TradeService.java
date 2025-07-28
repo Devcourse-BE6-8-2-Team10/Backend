@@ -9,7 +9,6 @@ import com.back.domain.trade.entity.Trade;
 import com.back.domain.trade.entity.TradeStatus;
 import com.back.domain.trade.repository.TradeRepository;
 import com.back.global.exception.ServiceException;
-import com.back.global.rq.Rq;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +21,6 @@ public class TradeService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
     private final TradeRepository tradeRepository;
-    private final Rq rq;
 
     @Transactional
     public Trade createTrade(Long postId, Long buyerId) {
