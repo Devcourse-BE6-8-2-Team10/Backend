@@ -146,6 +146,7 @@ class ChatServiceTest {
     @Test
     @DisplayName("채팅방 생성 실패 - 로그인 필요")
     void createChatRoom_Fail_needToLogin() {
+
         // given
         Long postId = 1L;
         String userName = "testuser";
