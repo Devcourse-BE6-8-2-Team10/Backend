@@ -2,6 +2,7 @@ package com.back.domain.auth.controller;
 
 import com.back.domain.auth.dto.request.MemberLoginRequest;
 import com.back.domain.auth.dto.request.MemberSignupRequest;
+import com.back.domain.auth.dto.request.TokenReissueRequest;
 import com.back.domain.member.entity.Member;
 import com.back.domain.member.entity.Role;
 import com.back.domain.member.entity.Status;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
@@ -202,5 +204,55 @@ public class AuthControllerTest {
         // 로그아웃 후 refreshToken 제거되었는지 확인
         Member member = memberRepository.findByEmail("user1@user.com").orElseThrow();
         assertThat(member.getRefreshToken()).isNull();
+    }
+
+    @Test
+    @DisplayName("AccessToken 재발급 성공")
+    void reissueAccessToken_success() throws Exception {
+        // given - 로그인 요청
+        MemberLoginRequest loginRequest = new MemberLoginRequest("user1@user.com", "user1234!");
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // 응답에서 refreshToken 추출
+        String responseJson = loginResult.getResponse().getContentAsString();
+        String refreshToken = objectMapper.readTree(responseJson)
+                .get("data")
+                .get("refreshToken")
+                .asText();
+
+        // 재발급 요청 DTO 생성
+        TokenReissueRequest reissueRequest = new TokenReissueRequest(refreshToken);
+
+        // when & then - AccessToken 재발급 요청, accessToken, refreshToken 응답
+        mockMvc.perform(post("/api/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-5"))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.refreshToken").exists());
+    }
+
+    @Test
+    @DisplayName("AccessToken 재발급 실패 - 유효하지 않은 RefreshToken")
+    void reissueAccessToken_fail_invalidToken() throws Exception {
+        // given: 존재하지 않거나 유효하지 않은 refreshToken
+        TokenReissueRequest reissueRequest = new TokenReissueRequest("invalid-refresh-token");
+
+        // when: 재발급 API 호출
+        ResultActions resultActions = mockMvc.perform(post("/api/auth/reissue")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reissueRequest)));
+
+        // then: 401 Unauthorized 응답 및 메시지 검증
+        resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.resultCode").value("401-1"))  // ResultCode.UNAUTHORIZED
+                .andExpect(jsonPath("$.msg").value("토큰 재발급 실패했습니다."));
     }
 }
