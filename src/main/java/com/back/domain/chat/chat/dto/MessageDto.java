@@ -15,7 +15,12 @@ public class MessageDto {
     private String content;
 
     public MessageDto() {
+        // 프론트 연결 시 동적으로 할당
+        this.senderId = 1L;
+        this.chatRoomId = 1L;
     }
+
+
 
     public MessageDto(String senderName, String content) {
         this.senderName = senderName;
