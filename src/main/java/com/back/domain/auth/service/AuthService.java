@@ -28,6 +28,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     // 로그인
+    @Transactional
     public MemberLoginResponse login(MemberLoginRequest request) {
         // 1. 인증 시도
         UsernamePasswordAuthenticationToken authToken =
@@ -48,9 +49,9 @@ public class AuthService {
         try {
             memberRepository.save(member);
         } catch (DataIntegrityViolationException e) {
-            // 리프레시 토큰이 중복되는 경우, 기존 토큰을 업데이트
-            log.warn("중복된 refreshToken 저장 시도: {}", refreshToken);
-            throw new ServiceException(ResultCode.SERVER_ERROR.code(), "중복된 리프레시 토큰입니다.");
+            // 리프레시 토큰 저장 실패 시 재시도 또는 예외 처리
+            log.error("리프레시 토큰 저장 실패", e);
+            throw new ServiceException(ResultCode.SERVER_ERROR.code(), "토큰 저장에 실패했습니다.");
         }
 
         // 5. DTO 응답 반환
