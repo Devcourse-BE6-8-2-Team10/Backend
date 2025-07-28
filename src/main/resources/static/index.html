@@ -8,7 +8,7 @@
 <body>
 <h1>Spring Boot WebSocket Chat</h1>
 <div>
-    <input type="text" id="sender" placeholder="Your name">
+    <input type="text" id="senderName" placeholder="Your name">
     <input type="text" id="message" placeholder="Message">
     <button onclick="sendMessage()">Send</button>
 </div>
@@ -29,15 +29,34 @@
     }
 
     function sendMessage() {
-        var sender = document.getElementById('sender').value;
+        var sender = document.getElementById('senderName').value;
         var message = document.getElementById('message').value;
-        stompClient.send("/app/sendMessage", {}, JSON.stringify({'sender': sender, 'content': message}));
+
+        console.log('=== 전송할 메시지 ===');
+        console.log('senderName:', sender);
+        console.log('message:', message);
+
+        var messageObject = {'senderName': sender, 'content': message};
+        console.log('messageObject:', messageObject);
+        console.log('JSON.stringify:', JSON.stringify(messageObject));
+
+        stompClient.send("/app/sendMessage", {}, JSON.stringify(messageObject));
     }
 
     function showMessage(message) {
+        console.log('=== 받은 메시지 ===');
+        console.log('전체 message 객체:', message);
+        console.log('message.sender:', message.sender);
+        console.log('message.senderName:', message.senderName);
+        console.log('message.content:', message.content);
+        console.log('================');
+
         var messages = document.getElementById('messages');
         var messageElement = document.createElement('div');
-        messageElement.appendChild(document.createTextNode(message.sender + ": " + message.content));
+
+        // sender와 senderName 둘 다 확인
+        var displayName = message.sender || message.senderName || 'Unknown';
+        messageElement.appendChild(document.createTextNode(displayName + ": " + message.content));
         messages.appendChild(messageElement);
     }
 
