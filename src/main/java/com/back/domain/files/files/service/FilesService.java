@@ -163,4 +163,14 @@ public class FilesService {
 
         return new RsData<>("200", "파일 조회 성공", responseDto);
     }
+
+    // 파일 삭제(관리자)
+    public RsData<Void> adminDeleteFile(Long fileId) {
+        Files file = filesRepository.findById(fileId)
+                .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다. " + fileId));
+
+        filesRepository.deleteById(fileId);
+
+        return new RsData<>("200", "파일 삭제 성공", null);
+    }
 }
