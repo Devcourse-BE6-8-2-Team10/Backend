@@ -30,7 +30,7 @@ public class PostDataInitializer {
     public void init() {
         log.info("===== 게시글 테스트 데이터 생성 시작 =====");
 
-        // 1. 유저가 없으면 생성
+        // 1. 유저 생성
         Member user = memberRepository.findByEmail("test1@user.com")
                 .orElseGet(() -> memberRepository.save(Member.builder()
                         .email("test1@user.com")
@@ -38,6 +38,12 @@ public class PostDataInitializer {
                         .name("사용자1")
                         .role(Role.USER)
                         .build()));
+
+        // 2. 게시글이 이미 있으면 중복 생성 방지
+        if (postRepository.count() > 0) {
+            log.info("게시글 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
+            return;
+        }
 
         // 2. 게시글 샘플 데이터 생성
         Post post1 = Post.builder()
