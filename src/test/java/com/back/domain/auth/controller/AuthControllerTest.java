@@ -11,6 +11,9 @@ import com.back.global.rsData.ResultCode;
 import com.back.global.rsData.RsData;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -252,7 +256,94 @@ public class AuthControllerTest {
         // then: 401 Unauthorized 응답 및 메시지 검증
         resultActions
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.resultCode").value("401-1"))  // ResultCode.UNAUTHORIZED
-                .andExpect(jsonPath("$.msg").value("토큰 재발급 실패했습니다."));
+                .andExpect(jsonPath("$.resultCode").value("401-1"))
+                .andExpect(jsonPath("$.msg").value("토큰 재발급에 실패했습니다."));
+    }
+
+    @Test
+    @DisplayName("AccessToken 재발급 실패 - 토큰 불일치")
+    void reissueAccessToken_fail_tokenMismatch() throws Exception {
+        // 다른 사용자의 유효한 토큰으로 테스트
+        // given - 로그인
+        MemberLoginRequest loginRequest = new MemberLoginRequest("user1@user.com", "user1234!");
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // DB에 저장된 RefreshToken이 아닌 위조된 다른 문자열로 요청
+        TokenReissueRequest reissueRequest = new TokenReissueRequest("fake-but-valid-looking-refresh-token");
+
+        // when & then
+        mockMvc.perform(post("/api/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.resultCode").value("401-1"))
+                .andExpect(jsonPath("$.msg").value("토큰 재발급에 실패했습니다."));
+    }
+
+    @Test
+    @DisplayName("AccessToken 재발급 실패 - 존재하지 않는 사용자")
+    void reissueAccessToken_fail_memberNotFound() throws Exception {
+        // 유효한 토큰이지만 사용자가 삭제된 경우
+        // given - 토큰 수동 생성 (DB에 없는 사용자 이메일로)
+        String invalidEmail = "not@exist.com";
+        String fakeToken = Jwts.builder()
+                .setSubject(invalidEmail)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1시간
+                .signWith(Keys.hmacShaKeyFor("testsecretsecretsecretsecret1234".getBytes()), SignatureAlgorithm.HS256)
+                .compact();
+
+        TokenReissueRequest reissueRequest = new TokenReissueRequest(fakeToken);
+
+        // when & then
+        mockMvc.perform(post("/api/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.resultCode").value("401-1"))
+                .andExpect(jsonPath("$.msg").value("토큰 재발급에 실패했습니다."));
+    }
+
+    @Test
+    @DisplayName("AccessToken 재발급 후 새로운 RefreshToken으로 재발급 가능")
+    void reissueAccessToken_canReissueWithNewToken() throws Exception {
+        // 재발급된 새로운 RefreshToken으로 다시 재발급 가능한지 확인
+        // 1차 로그인 → refreshToken 발급
+        MemberLoginRequest loginRequest = new MemberLoginRequest("user1@user.com", "user1234!");
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String firstRefreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
+                .get("data").get("refreshToken").asText();
+
+        // 1차 AccessToken 재발급
+        TokenReissueRequest firstReissue = new TokenReissueRequest(firstRefreshToken);
+        MvcResult reissueResult = mockMvc.perform(post("/api/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(firstReissue)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.refreshToken").exists())
+                .andReturn();
+
+        // 응답에서 새로운 refreshToken 획득
+        String newRefreshToken = objectMapper.readTree(reissueResult.getResponse().getContentAsString())
+                .get("data").get("refreshToken").asText();
+
+        // 2차 AccessToken 재발급 시도 (새 refreshToken으로)
+        TokenReissueRequest secondReissue = new TokenReissueRequest(newRefreshToken);
+        mockMvc.perform(post("/api/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(secondReissue)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-5"))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.refreshToken").exists());
     }
 }

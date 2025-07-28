@@ -1,4 +1,7 @@
 package com.back.domain.auth.dto.request;
 
-public record TokenReissueRequest(String refreshToken) {
+import jakarta.validation.constraints.NotBlank;
+
+public record TokenReissueRequest(@NotBlank(message = "RefreshToken은 필수입니다.")
+                                  String refreshToken) {
 }

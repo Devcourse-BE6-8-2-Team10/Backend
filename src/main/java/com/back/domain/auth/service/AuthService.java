@@ -94,7 +94,12 @@ public class AuthService {
 
         // 6. 리프레시 토큰도 갱신
         member.updateRefreshToken(newRefreshToken);
-        memberRepository.save(member);
+        try {
+            memberRepository.save(member);
+        } catch (DataIntegrityViolationException e) {
+            log.error("리프레시 토큰 갱신 실패", e);
+            throw new ServiceException(ResultCode.SERVER_ERROR.code(), "토큰 갱신에 실패했습니다.");
+        }
 
         return new TokenReissueResponse(newAccessToken, newRefreshToken);
     }
