@@ -22,6 +22,7 @@ import java.util.List;
 public class FilesService {
 
     private final FilesRepository filesRepository;
+    private final FileStorageService fileStorageService;
     private final PostRepository postRepository;
 
     // 파일 업로드 서비스
@@ -30,9 +31,9 @@ public class FilesService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다: " + postId));
 
         List<FileUploadResponseDto> responseList = new ArrayList<>();
+        int sortOrder = 1;
 
         if(files != null) {
-            int sortOrder = 1;
             for (MultipartFile file : files) {
                 // 파일이 없는 경우 건너뜀
                 if (file.isEmpty()) {continue;}
@@ -44,9 +45,10 @@ public class FilesService {
                 String fileType = file.getContentType();
                 long fileSize = file.getSize();
 
-                // TODO: 실제 파일 저장 후 URL 생성(임시 URL 사용)
-                String fileUrl = "http://example.com/uploads/test.png" + fileName;
+                // 파일 객체 스토리지에 저장
+                String fileUrl = fileStorageService.storeFile(file, "post_" + postId);
 
+                // 파일 메타데이터 저장
                 Files saved = filesRepository.save(
                         Files.builder()
                                 .post(post)
@@ -169,12 +171,9 @@ public class FilesService {
         Files file = filesRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다. " + fileId));
 
-        // TODO: 물리적 파일 삭제 로직 추가 필요
-        // String filePath = extractFilePath(file.getFileUrl());
-        // deletePhysicalFile(filePath);
+        fileStorageService.deletePhysicalFile(file.getFileUrl());
 
         filesRepository.deleteById(fileId);
-
         return new RsData<>("200", "파일 삭제 성공 (관리자)", null);
     }
 }
