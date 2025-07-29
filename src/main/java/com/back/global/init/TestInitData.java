@@ -45,6 +45,8 @@ public class TestInitData {
         safeSignup("user1@user.com", "user1234!", "유저1");
         safeSignup("user2@user.com", "user1234!", "유저2");
         safeSignup("user3@user.com", "user1234!", "유저3");
+        safeSignup("testuser1@user.com", "user1234!","사용자1");
+        safeSignup("testuser2@user.com", "user1234!", "사용자2");
     }
 
     private void safeSignup(String email, String password, String name) {
