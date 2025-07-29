@@ -22,7 +22,7 @@ public class ChatRestController {
     public RsData<List<MessageDto>> getChatRoomMessages(@PathVariable Long chatRoomId, Principal principal) {
         Member member = chatService.findByName(principal.getName());
 
-        List<MessageDto> messageDtos = chatService.getChatRoomMessages(chatRoomId, member.getId());
+        List<MessageDto> messageDtos = chatService.getChatRoomMessages(chatRoomId, principal);
 
         return new RsData<>("200-1", "채팅방 메시지 조회 성공", messageDtos);
     }

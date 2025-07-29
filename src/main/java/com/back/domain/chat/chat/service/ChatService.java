@@ -48,7 +48,11 @@ public class ChatService {
         return roomParticipantRepository.existsByChatRoomIdAndMemberIdAndIsActiveTrue(chatRoomId, memberId);
     }
 
-    public List<MessageDto> getChatRoomMessages(Long chatRoomId, Long requesterId) {
+    public List<MessageDto> getChatRoomMessages(Long chatRoomId, Principal principal) {
+        Member member = memberRepository.findByName(principal.getName())
+                .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
+        Long requesterId = member.getId();
+
         // 채팅방 존재 확인
         if( !chatRoomRepository.existsById(chatRoomId)) {
             throw new ServiceException("404-4", "존재하지 않는 채팅방입니다.");
