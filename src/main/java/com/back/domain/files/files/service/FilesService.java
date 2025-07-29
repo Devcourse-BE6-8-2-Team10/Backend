@@ -7,6 +7,7 @@ import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -46,7 +48,14 @@ public class FilesService {
                 long fileSize = file.getSize();
 
                 // 파일 객체 스토리지에 저장
-                String fileUrl = fileStorageService.storeFile(file, "post_" + postId);
+                String fileUrl = null;
+                try {
+                    fileStorageService.storeFile(file, "post_" + postId);
+                } catch (RuntimeException e) {
+                    log.error("파일 저장 실패, 건너뜀: " + fileName, e);
+                    continue;
+                }
+
 
                 // 파일 메타데이터 저장
                 Files saved = filesRepository.save(

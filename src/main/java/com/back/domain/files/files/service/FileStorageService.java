@@ -1,6 +1,7 @@
 package com.back.domain.files.files.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -9,21 +10,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static org.apache.naming.SelectorContext.prefix;
+import java.util.UUID;
 
 @Slf4j
 @Service
 public class FileStorageService {
 
     // === 로컬 저장 경로 ===
-    private final String UPLOAD_DIR = System.getProperty("user.home") + "/Downloads/uploads";
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     // 첨부파일 저장
     public String storeFile(MultipartFile file, String subFolder) {
+        // 파일 크기 제한 (예: 10MB)
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new RuntimeException("파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다.");
+        }
+
         try {
             // 디렉토리 생성
-            Path uploadPath = Paths.get(UPLOAD_DIR);
+            Path uploadPath = Paths.get(uploadDir, subFolder);
             if(!Files.exists(uploadPath)){
                 Files.createDirectories(uploadPath);
             }
@@ -31,9 +37,21 @@ public class FileStorageService {
             // 저장된 파일명 생성
             String originalFileName = file.getOriginalFilename();
             String extension = getExtension(originalFileName);
-            String fileName = prefix + "_" + System.currentTimeMillis() + extension;
+
+            // 파일명 생성
+            String fileName = "file_" + System.currentTimeMillis() + "_" +
+                    UUID.randomUUID().toString().substring(0, 8) + extension;
 
             Path filePath = uploadPath.resolve(fileName);
+            // 파일명 중복 시 재시도
+            int counter = 1;
+            while(Files.exists(filePath)){
+                String newFileName = "file_" + System.currentTimeMillis() + "_" +
+                        UUID.randomUUID().toString().substring(0, 8) + extension;
+                filePath = uploadPath.resolve(newFileName);
+                counter++;
+            }
+
             file.transferTo(filePath.toFile());
 
             // 접근 가능한 URL 반환
@@ -66,6 +84,9 @@ public class FileStorageService {
 
     // 파일 확장자 추출
     private String getExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
         int dotIndex = fileName.lastIndexOf(".");
         return dotIndex != -1 ? fileName.substring(dotIndex) : "";
     }
