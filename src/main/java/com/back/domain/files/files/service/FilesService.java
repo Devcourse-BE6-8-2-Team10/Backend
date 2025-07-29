@@ -135,7 +135,7 @@ public class FilesService {
     public RsData<Page<FileUploadResponseDto>> adminGetAllFiles(Pageable pageable) {
         // 관리자 권한 확인
         if (!rq.isAdmin()) {
-            return new RsData<>("403", "관리자 권한이 필요합니다.", null);
+            return new RsData<>("403-1", "관리자 권한이 필요합니다.", null);
         }
 
         Page<Files> filesPage = filesRepository.findAll(pageable);
@@ -149,7 +149,7 @@ public class FilesService {
     public RsData<FileUploadResponseDto> adminGetFileById(Long fileId) {
         // 관리자 확인
         if (!rq.isAdmin()) {
-            return new RsData<>("403", "관리자 권한이 필요합니다.", null);
+            return new RsData<>("403-2", "관리자 권한이 필요합니다.", null);
         }
         // 파일 ID로 파일 조회
         Files file = filesRepository.findById(fileId)
