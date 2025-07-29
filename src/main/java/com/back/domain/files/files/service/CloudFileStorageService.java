@@ -66,8 +66,17 @@ public class CloudFileStorageService implements FileStorageService {
 
     @Override // 추가: 인터페이스 구현 명시
     public void deletePhysicalFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            log.warn("삭제할 파일 URL이 비어있습니다.");
+            return;
+        }
+
         // 예시:
         // if (fileUrl == null || !fileUrl.startsWith("https://your-cloud-storage.com/")) return;
+        // if (!fileUrl.startsWith("https://your-cloud-storage.com/")) {
+        //     log.warn("유효하지 않은 클라우드 스토리지 URL: {}", fileUrl);
+        //     return;
+        // }
         // String fileNameToDelete = fileUrl.substring("https://your-cloud-storage.com/".length());
         // gcsStorage.delete(BlobId.of(bucketName, fileNameToDelete)); // GCS 예시
         // s3Client.deleteObject(bucketName, fileNameToDelete); // S3 예시
