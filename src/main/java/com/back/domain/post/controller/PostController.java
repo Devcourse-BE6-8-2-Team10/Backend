@@ -27,6 +27,13 @@ public class PostController {
         return ResponseEntity.created(location).body(result);
         }
 
+    //게시글 목록 조회
+    @GetMapping
+    public ResponseEntity<List<PostListDTO>> getPostList() {
+        List<PostListDTO> result = postService.getPostList();
+        return ResponseEntity.ok(result);
+    }
+
     //인기 게시글 top 10 보여줌
     @GetMapping("/popular")
     public ResponseEntity<List<PostListDTO>> getTop10PopularPosts() {

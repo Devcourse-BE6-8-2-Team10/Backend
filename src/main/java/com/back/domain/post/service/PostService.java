@@ -17,6 +17,7 @@ public class PostService {
 
     private final PostRepository postRepository;
 
+    //게시글 생성
     @Transactional
     public PostDetailDTO createPost(PostRequestDTO dto) {
         // 카테고리 변환 예외 처리
@@ -35,6 +36,16 @@ public class PostService {
         return new PostDetailDTO(saved, false);
     }
 
+    //게시글 목록 조회
+    @Transactional(readOnly = true)
+    public List<PostListDTO> getPostList() {
+        return postRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(PostListDTO::new)
+                .toList();
+    }
+
+    //인기 게시글 조회
     @Transactional(readOnly = true)
     public List<PostListDTO> getTop10PopularPosts() {
         return postRepository.findTop10ByOrderByFavoriteCntDesc()
