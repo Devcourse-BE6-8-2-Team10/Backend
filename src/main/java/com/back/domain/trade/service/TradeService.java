@@ -60,7 +60,7 @@ public class TradeService {
     }
 
     @Transactional(readOnly = true)
-    public Trade findLastest() {
+    public Trade findLatest() {
         return tradeRepository.findFirstByOrderByCreatedAtDesc()
                 .orElseThrow(() -> new NoSuchElementException("최근 거래 내역이 없습니다."));
     }

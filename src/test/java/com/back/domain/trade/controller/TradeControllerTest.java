@@ -51,7 +51,7 @@ class TradeControllerTest {
                         .content(content))
                 .andDo(print());
 
-        Trade trade = tradeService.findLastest();
+        Trade trade = tradeService.findLatest();
 
         resultActions
                 .andExpect(jsonPath("$.resultCode").value("201-1"))
