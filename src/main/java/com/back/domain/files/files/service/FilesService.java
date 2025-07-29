@@ -76,7 +76,7 @@ public class FilesService {
                                 .build()
                 );
 
-                responseList.add(mapToFileUploadResponseDto(saved));
+                responseList.add(FileUploadResponseDto.from(saved));
             }
         }
         return new RsData<>(
@@ -91,7 +91,7 @@ public class FilesService {
         List<Files> files = filesRepository.findByPostIdOrderBySortOrderAsc(postId);
 
         List<FileUploadResponseDto> result = files.stream()
-                .map(this::mapToFileUploadResponseDto)
+                .map(FileUploadResponseDto::from)
                 .toList();
 
         return new RsData<>(
@@ -140,7 +140,7 @@ public class FilesService {
 
         Page<Files> filesPage = filesRepository.findAll(pageable);
 
-        Page<FileUploadResponseDto> dtoPage = filesPage.map(this::mapToFileUploadResponseDto);
+        Page<FileUploadResponseDto> dtoPage = filesPage.map(FileUploadResponseDto::from);
 
         return new RsData<>("200", dtoPage.isEmpty() ? "등록된 파일이 없습니다." : "파일 목록 조회 성공", dtoPage);
     }
@@ -155,7 +155,7 @@ public class FilesService {
         Files file = filesRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다: " + fileId));
 
-        return new RsData<>("200", "파일 조회 성공 (관리자)", mapToFileUploadResponseDto(file));
+        return new RsData<>("200", "파일 조회 성공 (관리자)", FileUploadResponseDto.from(file));
     }
 
     // 파일 삭제(관리자)
@@ -177,21 +177,8 @@ public class FilesService {
         return new RsData<>("200", "파일 삭제 성공 (관리자)", null);
     }
 
-    // ==============헬퍼 메서드 영역 ==============
-    // files 엔티티-> fileUploadResponseDto 변환
-    private FileUploadResponseDto mapToFileUploadResponseDto(Files file) {
-        return new FileUploadResponseDto(
-                file.getId(),
-                file.getPost().getId(),
-                file.getFileName(),
-                file.getFileType(),
-                file.getFileSize(),
-                file.getFileUrl(),
-                file.getSortOrder(),
-                file.getCreatedAt()
-        );
-    }
 
+    // ==============헬퍼 메서드 영역 ==============
     // 물리 파일 삭제
     private void deletePhysicalFileSafely(String fileUrl) {
         try {
