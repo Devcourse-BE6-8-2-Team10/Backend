@@ -77,8 +77,10 @@ public class ChatService {
         Member member = memberRepository.findByName(userName)
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
 
+
         // 이미 해당 게시글에 해당 사용자가 만든 채팅방이 있는지 확인
         if (chatRoomRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent()) {
+
             throw new ServiceException("409-1", "이미 생성된 채팅방이 있습니다.");
         }
 
@@ -117,6 +119,7 @@ public class ChatService {
                 })
                 .collect(Collectors.toList());
     }
+
 
     public void deleteChatRoom(Long chatRoomId) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)

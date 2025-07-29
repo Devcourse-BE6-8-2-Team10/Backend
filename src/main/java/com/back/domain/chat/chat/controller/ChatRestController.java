@@ -41,6 +41,7 @@ public class ChatRestController {
     public RsData<ChatRoomDto> deleteChatRoom(@PathVariable Long chatRoomId) {
         chatService.deleteChatRoom(chatRoomId);
 
+
         return new RsData<>("200-1", "채팅방 삭제 성공");
     }
 }
