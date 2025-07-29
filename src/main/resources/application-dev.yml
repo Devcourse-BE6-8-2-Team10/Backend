@@ -18,4 +18,4 @@ spring:
 
   # 로컬 업로드(개발용)
   file:
-    upload-dir: ${USER_HOME}/Downloads/uploads
+    upload-dir: C:/Temp/uploads

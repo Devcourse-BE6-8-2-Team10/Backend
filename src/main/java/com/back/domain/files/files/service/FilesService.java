@@ -1,3 +1,4 @@
+// FilesService.java
 package com.back.domain.files.files.service;
 
 import com.back.domain.files.files.dto.FileUploadResponseDto;
@@ -24,7 +25,7 @@ import java.util.List;
 public class FilesService {
 
     private final FilesRepository filesRepository;
-    private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService; // 변경: LocalFileStorageService 대신 인터페이스 주입
     private final PostRepository postRepository;
 
     // 파일 업로드 서비스
@@ -48,14 +49,13 @@ public class FilesService {
                 long fileSize = file.getSize();
 
                 // 파일 객체 스토리지에 저장
-                String fileUrl = null;
+                String fileUrl = null; // 초기화
                 try {
-                    fileStorageService.storeFile(file, "post_" + postId);
+                    fileUrl = fileStorageService.storeFile(file, "post_" + postId);
                 } catch (RuntimeException e) {
                     log.error("파일 저장 실패, 건너뜀: " + fileName, e);
                     continue;
                 }
-
 
                 // 파일 메타데이터 저장
                 Files saved = filesRepository.save(
@@ -64,7 +64,7 @@ public class FilesService {
                                 .fileName(fileName)
                                 .fileType(fileType)
                                 .fileSize(fileSize)
-                                .fileUrl(fileUrl)
+                                .fileUrl(fileUrl) // 저장된 fileUrl 사용
                                 .sortOrder(sortOrder++)
                                 .build()
                 );
@@ -115,7 +115,6 @@ public class FilesService {
 
     // 파일 개별 삭제 서비스
     public RsData<Void> deleteFile(Long postId, Long fileId, Long memberId) {
-        // TODO: 실제 로그인한 회원 ID는 스프링 시큐리티나 Rq.getActor().getId()에서 받아야 함
 
         Files file = filesRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다: " + fileId));
@@ -125,6 +124,14 @@ public class FilesService {
         }
         if (!file.getPost().getMember().getId().equals(memberId)) {
             throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다. " + memberId);
+        }
+
+        // 데이터베이스에서 파일 메타데이터 삭제 전, 물리 파일 삭제 시도
+        try {
+            fileStorageService.deletePhysicalFile(file.getFileUrl()); // 변경: 인터페이스 메서드 호출
+        } catch (Exception e) {
+            log.error("파일 삭제 중 오류 발생 (DB 메타데이터는 삭제되지 않음): " + file.getFileUrl(), e);
+            throw new RuntimeException("파일 삭제 중 오류가 발생했습니다. 다시 시도해주세요."); // 사용자에게 오류 알림
         }
 
         filesRepository.deleteById(fileId);
@@ -143,15 +150,15 @@ public class FilesService {
         Page<Files> filesPage = filesRepository.findAll(pageable);
 
         Page<FileUploadResponseDto> dtoPage = filesPage.map(file -> new FileUploadResponseDto(
-                        file.getId(),
-                        file.getPost().getId(),
-                        file.getFileName(),
-                        file.getFileType(),
-                        file.getFileSize(),
-                        file.getFileUrl(),
-                        file.getSortOrder(),
-                        file.getCreatedAt()
-                ));
+                file.getId(),
+                file.getPost().getId(),
+                file.getFileName(),
+                file.getFileType(),
+                file.getFileSize(),
+                file.getFileUrl(),
+                file.getSortOrder(),
+                file.getCreatedAt()
+        ));
 
         return new RsData<>("200", dtoPage.isEmpty() ? "등록된 파일이 없습니다." : "파일 목록 조회 성공", dtoPage);
     }
@@ -180,7 +187,12 @@ public class FilesService {
         Files file = filesRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다. " + fileId));
 
-        fileStorageService.deletePhysicalFile(file.getFileUrl());
+        try {
+            fileStorageService.deletePhysicalFile(file.getFileUrl()); // 변경: 인터페이스 메서드 호출
+        } catch (Exception e) {
+            log.error("관리자의 파일 삭제 중 오류 발생 (DB 메타데이터는 삭제되지 않음): " + file.getFileUrl(), e);
+            throw new RuntimeException("관리자 파일 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
+        }
 
         filesRepository.deleteById(fileId);
         return new RsData<>("200", "파일 삭제 성공 (관리자)", null);
