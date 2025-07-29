@@ -59,7 +59,8 @@ public class TradeService {
         return tradeRepository.findByBuyerOrSeller(member, member, pageable).map(TradeDto::new);
     }
 
-    public Trade findLasted() {
+    @Transactional(readOnly = true)
+    public Trade findLastest() {
         return tradeRepository.findFirstByOrderByCreatedAtDesc()
                 .orElseThrow(() -> new NoSuchElementException("최근 거래 내역이 없습니다."));
     }
