@@ -31,6 +31,11 @@ public class CloudFileStorageService implements FileStorageService {
         }
 
         try {
+            String contentType = file.getContentType();
+            if (contentType == null || !isAllowedFileType(contentType)) {
+                throw new RuntimeException("허용되지 않는 파일 형식입니다.");
+            }
+
             // 실제 클라우드 스토리지 (GCS, S3 등)에 파일 저장 로직 구현
             // 예시:
             String originalFileName = file.getOriginalFilename();
@@ -76,5 +81,12 @@ public class CloudFileStorageService implements FileStorageService {
         }
         int dotIndex = fileName.lastIndexOf(".");
         return dotIndex != -1 ? fileName.substring(dotIndex) : "";
+    }
+
+    // 허용하는 파일 타입
+    private boolean isAllowedFileType(String contentType) {
+        return contentType.startsWith("image/") ||
+                contentType.equals("application/pdf") ||
+                contentType.startsWith("text/");
     }
 }
