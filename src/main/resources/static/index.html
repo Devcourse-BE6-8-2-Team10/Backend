@@ -58,7 +58,7 @@
         <h3>메시지 전송</h3>
         <input type="text" id="messageInput" placeholder="Message" onkeypress="handleKeyPress(event)">
         <button onclick="sendMessage()" id="sendBtn" disabled>Send Message</button>
-        <button onclick="loadChatHistory()" id="historyBtn" disabled>Load More History</button>
+        <button onclick="loadChatHistory()" id="historyBtn" disabled>Load Chat History</button>
     </div>
 
     <div class="status">
@@ -73,9 +73,6 @@
     var currentChatRoomId = null;
     var currentUserEmail = null;
     var isConnected = false;
-    var chatHistoryPage = 0; // 페이징을 위한 변수
-    var chatHistorySize = 10; // 한 번에 로드할 메시지 수
-    var hasMoreHistory = true; // 더 불러올 히스토리가 있는지 확인
 
     function updateConnectionStatus(status) {
         document.getElementById('connectionStatus').textContent = status;
@@ -90,17 +87,28 @@
 
     function connect() {
         currentUserEmail = document.getElementById('senderEmail').value;
+        console.log('=== WebSocket 연결 시작 ===');
+        console.log('사용자 이메일:', currentUserEmail);
 
+        // SockJS 연결 (헤더 제거)
         var socket = new SockJS('/chat');
         stompClient = Stomp.over(socket);
 
-        // WebSocket 연결 시 사용자 정보 헤더에 포함
+        // 디버그 모드 활성화
+        stompClient.debug = function(str) {
+            console.log('STOMP Debug:', str);
+        };
+
+        // STOMP connect 시 사용자 정보를 헤더에 포함
         var connectHeaders = {
             'user-email': currentUserEmail
         };
+        console.log('STOMP 연결 헤더:', connectHeaders);
 
         stompClient.connect(connectHeaders, function (frame) {
-            console.log('Connected: ' + frame);
+            console.log('=== WebSocket 연결 성공 ===');
+            console.log('Connected frame:', frame);
+            console.log('User principal:', frame.headers['user-name']);
             updateConnectionStatus('연결됨');
 
             // 전역 에러 메시지 구독
@@ -110,9 +118,11 @@
             });
 
             addSystemMessage('WebSocket 연결 성공');
+            addSystemMessage('사용자: ' + frame.headers['user-name']);
 
         }, function(error) {
-            console.log('Connection error: ' + error);
+            console.log('=== WebSocket 연결 실패 ===');
+            console.log('Connection error:', error);
             updateConnectionStatus('연결 실패');
             addSystemMessage('WebSocket 연결 실패: ' + error);
         });
@@ -155,20 +165,29 @@
                 currentChatRoomId = result.data;
                 updateCurrentChatRoom(currentChatRoomId);
 
-                // 페이징 변수 초기화
-                chatHistoryPage = 0;
-                hasMoreHistory = true;
-
                 // WebSocket 구독 설정
                 const subscriptionPath = '/user/queue/chat/' + currentChatRoomId;
-                console.log('Subscribing to path:', subscriptionPath);
+                console.log('=== WebSocket 구독 설정 ===');
+                console.log('구독 경로:', subscriptionPath);
+                console.log('현재 사용자 이메일:', senderEmail);
 
                 stompClient.subscribe(subscriptionPath, function (chatMessage) {
-                    console.log('Message received from WebSocket:', chatMessage);
-                    showMessage(JSON.parse(chatMessage.body));
+                    console.log('=== WebSocket 메시지 수신 ===');
+                    console.log('Raw message:', chatMessage);
+                    console.log('Message body:', chatMessage.body);
+
+                    try {
+                        const parsedMessage = JSON.parse(chatMessage.body);
+                        console.log('Parsed message:', parsedMessage);
+                        showMessage(parsedMessage);
+                    } catch (e) {
+                        console.error('메시지 파싱 에러:', e);
+                    }
                 });
 
+                console.log('WebSocket 구독 완료');
                 addSystemMessage('채팅방 생성 및 참여 성공! (ID: ' + currentChatRoomId + ')');
+                addSystemMessage('WebSocket 구독 경로: ' + subscriptionPath);
                 document.getElementById('sendBtn').disabled = false;
                 document.getElementById('historyBtn').disabled = false;
 
@@ -226,72 +245,63 @@
     }
 
     async function loadChatHistory() {
+        console.log('=== loadChatHistory 시작 ===');
+        console.log('currentChatRoomId:', currentChatRoomId);
+
         if (!currentChatRoomId) {
             alert('먼저 채팅방에 참여해주세요!');
             return;
         }
 
-        if (!hasMoreHistory) {
-            addSystemMessage('더 이상 불러올 메시지가 없습니다.');
-            return;
-        }
-
         var jwtToken = document.getElementById('jwtToken').value;
+        console.log('JWT Token exists:', !!jwtToken);
+
         document.getElementById('historyBtn').disabled = true;
 
         try {
-            // 페이징 파라미터 추가 (백엔드에서 지원한다면)
-            const response = await fetch(`/api/chat/rooms/${currentChatRoomId}/messages?page=${chatHistoryPage}&size=${chatHistorySize}`, {
+            // 기본 API 호출 (페이징 제거)
+            const url = `/api/chat/rooms/${currentChatRoomId}/messages`;
+            console.log('API 호출 URL:', url);
+
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + jwtToken
                 }
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             if (response.ok) {
                 const result = await response.json();
-                console.log('Chat history:', result);
+                console.log('Chat history 응답:', result);
 
                 if (result.data && result.data.length > 0) {
-                    addSystemMessage(`=== 채팅 기록 (페이지 ${chatHistoryPage + 1}) ===`);
+                    addSystemMessage(`=== 채팅 기록 (총 ${result.data.length}개) ===`);
 
-                    // 메시지를 역순으로 표시 (오래된 것부터)
-                    var messagesToShow = result.data.slice().reverse();
-
-                    // 현재 메시지 컨테이너의 맨 위에 히스토리 추가
-                    var messagesContainer = document.getElementById('messages');
-                    var currentScrollHeight = messagesContainer.scrollHeight;
-
-                    messagesToShow.forEach(message => {
+                    result.data.forEach((message, index) => {
+                        console.log(`메시지 ${index}:`, message);
                         showHistoryMessage(message);
                     });
 
-                    // 스크롤 위치 조정 (새로 추가된 메시지로 인한 스크롤 점프 방지)
-                    var newScrollHeight = messagesContainer.scrollHeight;
-                    messagesContainer.scrollTop = newScrollHeight - currentScrollHeight;
-
-                    chatHistoryPage++; // 다음 페이지로
-
-                    // 받은 메시지가 요청한 사이즈보다 적으면 더 이상 없음
-                    if (result.data.length < chatHistorySize) {
-                        hasMoreHistory = false;
-                        addSystemMessage('모든 채팅 기록을 불러왔습니다.');
-                    }
-
                     addSystemMessage('================');
                 } else {
-                    addSystemMessage('더 이상 메시지가 없습니다.');
-                    hasMoreHistory = false;
+                    console.log('메시지가 없음');
+                    addSystemMessage('메시지가 없습니다.');
                 }
 
             } else {
                 const errorText = await response.text();
+                console.error('API 에러 응답:', errorText);
                 addErrorMessage('채팅 기록 조회 실패: ' + errorText);
             }
         } catch (error) {
+            console.error('loadChatHistory catch 에러:', error);
             addErrorMessage('채팅 기록 조회 중 오류: ' + error.message);
         } finally {
             document.getElementById('historyBtn').disabled = false;
+            console.log('=== loadChatHistory 완료 ===');
         }
     }
 
@@ -311,19 +321,20 @@
             messageElement.innerHTML = `<strong>${message.senderName}:</strong> ${message.content} <small style="color: #999;">(기록)</small>`;
         }
 
-        // 히스토리 메시지는 맨 위에 추가 (기존 메시지들 위에)
-        var firstChild = messages.firstChild;
-        if (firstChild) {
-            messages.insertBefore(messageElement, firstChild);
-        } else {
-            messages.appendChild(messageElement);
-        }
+        // 히스토리 메시지도 아래에 추가 (최신이 아래로)
+        messages.appendChild(messageElement);
+        messages.scrollTop = messages.scrollHeight;
     }
 
     function sendMessage() {
         var senderName = document.getElementById('senderName').value;
         var senderEmail = document.getElementById('senderEmail').value;
         var message = document.getElementById('messageInput').value;
+
+        console.log('=== sendMessage 시작 ===');
+        console.log('발신자:', senderName, senderEmail);
+        console.log('메시지:', message);
+        console.log('채팅방 ID:', currentChatRoomId);
 
         if (!currentChatRoomId) {
             alert('먼저 채팅방에 참여해주세요!');
@@ -348,11 +359,15 @@
             'senderId': getCurrentUserId() // JWT에서 사용자 ID 추출
         };
 
+        console.log('전송할 메시지 데이터:', messageData);
+
         // 내 메시지를 즉시 화면에 표시
         showMessage(messageData, true); // true = 내 메시지임을 표시
+        console.log('내 메시지 즉시 표시 완료');
 
-        console.log('Sending message:', messageData);
+        console.log('WebSocket으로 메시지 전송 중...');
         stompClient.send("/app/sendMessage", {}, JSON.stringify(messageData));
+        console.log('WebSocket 전송 완료');
 
         // 메시지 입력창 클리어
         document.getElementById('messageInput').value = '';
