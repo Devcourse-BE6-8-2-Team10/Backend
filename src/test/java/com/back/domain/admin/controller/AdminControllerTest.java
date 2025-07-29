@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -25,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@PreAuthorize("hasRole('ADMIN')")
 @Transactional
 @DisplayName("AdminController 통합 테스트")
 public class AdminControllerTest {
@@ -76,4 +74,28 @@ public class AdminControllerTest {
                 .andExpect(jsonPath("$.data.pageable.pageNumber").value(0))
                 .andExpect(jsonPath("$.data.pageable.pageSize").value(10));
     }
+
+    @Test
+    @DisplayName("권한 없는 사용자의 회원 목록 조회 실패")
+    void getAllMembers_unauthorized() throws Exception {
+        // given - 일반 사용자 계정 생성
+        String email = "testUser@user.com";
+        String password = "user1234!";
+        Member user = Member.builder()
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .name("일반사용자")
+                .role(Role.USER)
+                .build();
+        memberRepository.save(user);
+
+        String token = jwtTokenProvider.generateAccessToken(user);
+
+        // when & then
+        mockMvc.perform(get("/api/admin/members")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
 }
