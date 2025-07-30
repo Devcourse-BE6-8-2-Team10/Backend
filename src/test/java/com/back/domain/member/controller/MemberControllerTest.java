@@ -223,9 +223,9 @@ public class MemberControllerTest {
                 .build());
 
         // when & then
-        mockMvc.perform(get("/api/members/" + otherMember.getId() + "/profile"))
+        mockMvc.perform(get("/api/members/" + otherMember.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resultCode").value("200-8")) // 실제 ResultCode 값에 맞게 수정
+                .andExpect(jsonPath("$.resultCode").value("200-8"))
                 .andExpect(jsonPath("$.msg").value("프로필 조회 성공"))
                 .andExpect(jsonPath("$.data.name").value("다른유저"))
                 .andExpect(jsonPath("$.data.profileUrl").value("https://example.com/profile.jpg"));
@@ -239,7 +239,7 @@ public class MemberControllerTest {
         Long nonExistentId = 99999L;
 
         // when & then
-        mockMvc.perform(get("/api/members/" + nonExistentId + "/profile"))
+        mockMvc.perform(get("/api/members/" + nonExistentId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.resultCode").value("404-2"))
                 .andExpect(jsonPath("$.msg").value("해당 사용자가 존재하지 않습니다."));
