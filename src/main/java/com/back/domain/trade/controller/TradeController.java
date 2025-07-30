@@ -28,11 +28,13 @@ public class TradeController {
 
     public record TradeCreateReqBody(
             @NotNull @Positive Long postId
-    ) {}
+    ) {
+    }
+
     @PostMapping
     @Operation(summary = "거래 생성")
-    public RsData<?> createTrade(Rq rq, @RequestBody @Valid TradeCreateReqBody reqBody) {
-        Trade trade = tradeService.createTrade(reqBody.postId(), rq.getMember().getId());
+    public RsData<TradeDto> createTrade(@RequestBody @Valid TradeCreateReqBody reqBody) {
+        Trade trade = tradeService.createTrade(reqBody.postId(), this.rq.getMember().getId());
         return new RsData<>(
                 "201-1",
                 "%s번 거래가 생성되었습니다.".formatted(trade.getId()),
@@ -42,10 +44,10 @@ public class TradeController {
 
     @GetMapping("")
     @Operation(summary = "본인 모든 거래 조회")
-    public RsData<TradePageResponse<TradeDto>> getMyTrades(Pageable pageable){
+    public RsData<TradePageResponse<TradeDto>> getMyTrades(Pageable pageable) {
         Member member = rq.getMember();
         Page<TradeDto> trades = tradeService.getMyTrades(member, pageable);
-        return new RsData<> (
+        return new RsData<>(
                 "200-1",
                 "거래 목록 조회 성공",
                 TradePageResponse.of(trades)
