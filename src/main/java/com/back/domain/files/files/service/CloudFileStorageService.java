@@ -30,10 +30,13 @@ public class CloudFileStorageService implements FileStorageService {
         this.gcsStorage = gcsStorage;
     }
 
+    @Value(("${file.upload.max-size:10485760"))
+    private long maxFileSize; // 최대 파일 크기 (기본값: 10MB)
+
     @Override
     public String storeFile(MultipartFile file, String subFolder) {
         // 파일 크기 제한 (예: 10MB)
-        if (file.getSize() > 10 * 1024 * 1024) {
+        if (file.getSize() > maxFileSize) {
             log.warn("파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다. 파일명: {}", file.getOriginalFilename());
             throw new RuntimeException("파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다.");
         }
