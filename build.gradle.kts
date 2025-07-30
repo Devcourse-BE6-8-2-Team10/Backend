@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.5.3"
     id("io.spring.dependency-management") version "1.1.7"
 }
+val springCloudGcpVersion by extra("7.0.0")
 
 group = "com"
 version = "0.0.1-SNAPSHOT"
@@ -28,6 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("com.google.cloud:spring-cloud-gcp-starter-storage")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
@@ -51,6 +53,11 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
+}
+dependencyManagement {
+    imports {
+        mavenBom("com.google.cloud:spring-cloud-gcp-dependencies:$springCloudGcpVersion")
+    }
 }
 
 tasks.withType<Test> {
