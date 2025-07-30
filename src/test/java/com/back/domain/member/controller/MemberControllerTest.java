@@ -129,7 +129,7 @@ public class MemberControllerTest {
     @Test
     @DisplayName("회원 정보 수정 성공 - 이름과 프로필 URL 수정")
     @WithUserDetails(value = "user1@user.com")
-    void updateMember_success_nameOnly() throws Exception {
+    void updateMember_success_nameAndProfileUrl() throws Exception {
         MemberUpdateRequest request = new MemberUpdateRequest(
                 "이름개명",
                 "testUrl.com/profile.jpg",
@@ -146,12 +146,13 @@ public class MemberControllerTest {
 
         Member updated = memberRepository.findByEmail("user1@user.com").orElseThrow();
         assertEquals("이름개명", updated.getName());
+        assertEquals("testUrl.com/profile.jpg", updated.getProfileUrl());
     }
 
     @Test
     @DisplayName("회원 정보 수정 성공 - 비밀번호 수정")
     @WithUserDetails(value = "user1@user.com")
-    void updateMember_success_nameAndPassword() throws Exception {
+    void updateMember_success_passwordOnly() throws Exception {
         MemberUpdateRequest request = new MemberUpdateRequest(
                 null,
                 null,
