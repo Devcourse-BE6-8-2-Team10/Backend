@@ -27,10 +27,8 @@ public class PostService {
     //게시글 생성
     @Transactional
     public PostDetailDTO createPost(PostRequestDTO dto) {
-        Member member = rq.getMember();
-        if (member == null) {
-            throw new ServiceException("UNAUTHORIZED", "로그인이 필요합니다.");
-        }
+        Member member = getCurrentMemberOrThrow();
+
         // 카테고리 변환 예외 처리
         Post.Category category = Post.Category.from(dto.category())
                 .orElseThrow(() -> new ServiceException("BAD_REQUEST", "유효하지 않은 카테고리입니다."));
@@ -57,16 +55,14 @@ public class PostService {
                 .toList();
     }
 
-    //찜 여부 판단
-    private boolean checkIsLiked(Member member, Post post) {
-        return favoritePostRepository.existsByMemberAndPost(member, post);
-    }
-
-    //게시글 상세조회
-    public RsData<PostDetailDTO> getPostDetail(Long postId, Member member) {
+    // 게시글 상세 조회
+    @Transactional(readOnly = true)
+    public RsData<PostDetailDTO> getPostDetail(Long postId) {
+        Member member = getCurrentMemberOrThrow();
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다"));
-        boolean isLiked = checkIsLiked(member, post);
+
+        boolean isLiked = favoritePostRepository.existsByMemberAndPost(member, post);
         return new RsData<>("SUCCESS", "게시글 조회 성공", new PostDetailDTO(post, isLiked));
     }
 
@@ -77,5 +73,14 @@ public class PostService {
                 .stream()
                 .map(PostListDTO::new)
                 .toList();
+    }
+
+    //현재 로그인 유저 확인
+    private Member getCurrentMemberOrThrow() {
+        Member member = rq.getMember();
+        if (member == null) {
+            throw new ServiceException("UNAUTHORIZED", "로그인이 필요합니다.");
+        }
+        return member;
     }
 }
