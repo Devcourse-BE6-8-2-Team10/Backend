@@ -2,6 +2,7 @@ package com.back.domain.member.service;
 
 
 import com.back.domain.auth.dto.request.MemberSignupRequest;
+import com.back.domain.member.dto.request.MemberUpdateRequest;
 import com.back.domain.member.dto.response.MemberMyPageResponse;
 import com.back.domain.member.entity.Member;
 import com.back.domain.member.repository.MemberRepository;
@@ -60,4 +61,35 @@ public class MemberService {
         // 2. 마이페이지 정보 반환
         return MemberMyPageResponse.fromEntity(foundMember);
     }
+
+    // 회원 정보 수정
+    @Transactional
+    public void updateMemberInfo(Member member, MemberUpdateRequest request) {
+
+        // 1. 이름 변경
+        if (request.name() != null && !request.name().isBlank()) {
+            member.updateName(request.name());
+        }
+
+        // 2. 프로필 URL 변경
+        if (request.profileUrl() != null && !request.profileUrl().isBlank()) {
+            member.updateProfileUrl(request.profileUrl());
+        }
+
+        // 3. 비밀번호 변경 요청이 있을 경우만 현재 비밀번호 확인
+        if (request.newPassword() != null && !request.newPassword().isBlank()) {
+            if (request.currentPassword() == null || request.currentPassword().isBlank()) {
+                throw new IllegalArgumentException("현재 비밀번호를 입력해주세요.");
+            }
+
+            if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
+
+            member.updatePassword(passwordEncoder.encode(request.newPassword()));
+        }
+
+        memberRepository.save(member);
+    }
+
 }
