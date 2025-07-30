@@ -1,12 +1,17 @@
 package com.back.domain.chat.chat.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.util.Objects;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MessageDto {
     private Long senderId;
     private Long chatRoomId;
@@ -14,30 +19,27 @@ public class MessageDto {
     private String senderName;
     private String senderEmail;
     private String content;
-
-    public MessageDto() {
-        // 프론트 연결 시 동적으로 할당
-        this.senderId = 1L;
-        this.chatRoomId = 1L;
-    }
-
-
+    
+    // Jackson JSON 역직렬화를 위한 sender 필드 (senderName과 동일)
+    @JsonProperty("sender")
+    private String sender;
 
     public MessageDto(String senderName, String content, Long senderId, Long chatRoomId) {
         this.senderName = senderName;
+        this.sender = senderName; // 동기화
         this.content = content;
-
         this.senderId = senderId;
         this.chatRoomId = chatRoomId;
     }
 
-    // 기존 프론트엔드 호환성을 위한 getter
-    public String getSender() {
-        return this.senderName;
+    // senderName과 sender 동기화
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+        this.sender = senderName;
     }
-
-    // 기존 프론트엔드 호환성을 위한 setter
+    
     public void setSender(String sender) {
+        this.sender = sender;
         this.senderName = sender;
     }
 
