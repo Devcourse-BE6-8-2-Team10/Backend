@@ -8,7 +8,6 @@ import com.back.domain.trade.entity.Trade;
 import com.back.domain.trade.service.TradeService;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
-import com.back.global.security.auth.MemberDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,7 +16,6 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,12 +31,8 @@ public class TradeController {
     ) {}
     @PostMapping
     @Operation(summary = "거래 생성")
-    public RsData<TradeDto> createTrade(
-        @AuthenticationPrincipal MemberDetails memberDetails,
-        @RequestBody @Valid TradeCreateReqBody reqBody) {
-        Long buyerId = memberDetails.getMember().getId();
-        Trade trade = tradeService.createTrade(reqBody.postId(), buyerId);
-
+    public RsData<?> createTrade(Rq rq, @RequestBody @Valid TradeCreateReqBody reqBody) {
+        Trade trade = tradeService.createTrade(reqBody.postId(), rq.getMember().getId());
         return new RsData<>(
                 "201-1",
                 "%s번 거래가 생성되었습니다.".formatted(trade.getId()),
