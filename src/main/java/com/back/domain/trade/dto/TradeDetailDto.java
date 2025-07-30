@@ -10,7 +10,7 @@ public record TradeDetailDto (
         @NonNull Long id,
         @NonNull Long postId,
         @NonNull String postTitle,
-        @NonNull String PostCategory,
+        @NonNull String postCategory,
         int price,
         @NonNull String status,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -23,7 +23,7 @@ public record TradeDetailDto (
             trade.getId(),
             trade.getPost().getId(),
             trade.getPost().getTitle(),
-            trade.getPost().getCategory().name(),
+            trade.getPost().getCategory().getLabel(),
             trade.getPrice(),
             trade.getStatus().name(),
             trade.getCreatedAt(),

@@ -60,7 +60,7 @@ public class TradeController {
 
     @GetMapping("/{id}")
     @Operation(summary = "거래 상세 조회")
-    public RsData<TradeDetailDto> getTradeDetail(@PathVariable Long id, Rq rq) {
+    public RsData<TradeDetailDto> getTradeDetail(@PathVariable @Positive Long id) {
         return new RsData<>("200-1", "거래 상세 조회 성공", tradeService.getTradeDetail(id, rq.getMember()));
     }
 }
