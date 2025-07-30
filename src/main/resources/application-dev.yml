@@ -20,7 +20,7 @@ spring:
 file:
   upload-dir: C:/Temp/uploads
 
-  # 테스트용 삭제할 것
+  # 테스트용
   # 객체 스토리지(GCS, S3 등)
   cloud:
     gcp:
