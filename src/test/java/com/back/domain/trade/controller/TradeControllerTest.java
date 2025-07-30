@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -27,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -138,33 +138,42 @@ class TradeControllerTest {
     @WithUserDetails("user2@user.com")
     @DisplayName("5. 내 거래 목록 전체 조회")
     void t5() throws Exception {
+        // 1. 로그인된 사용자 정보 확보
         Member loginUser = rq.getMember();
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TradeDto> expectedPage = tradeService.getMyTrades(loginUser, pageable);
-        List<TradeDto> trades = expectedPage.getContent();
 
+        // 2. 실제 DB에서 기대값 조회 및 DTO 변환
+        List<TradeDto> trades = tradeRepository.findByBuyerOrSeller(loginUser, loginUser, Pageable.unpaged())
+                .stream()
+                .map(TradeDto::new)
+                .toList();
 
-        // 2. API 요청
+        // 3. API 요청
         ResultActions resultActions = mvc.perform(get("/api/trades")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print());
 
-        // 3. 응답 공통 검증
+        // 4. 응답 기본 검증
         resultActions
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
                 .andExpect(jsonPath("$.msg").value("거래 목록 조회 성공"))
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.content.length()").value(trades.size()));
 
-        // 4. 실제 DTO 값과 비교
+        // 5. JSON 응답값 파싱
         String json = resultActions.andReturn().getResponse().getContentAsString();
         JsonNode contentArray = objectMapper.readTree(json).path("data").path("content");
 
-        for (int i = 0; i < trades.size(); i++) {
-            TradeDto expected = trades.get(i);
-            JsonNode actual = contentArray.get(i);
+        // 6. 기대값을 Map<Long, TradeDto>로 변환 (id 기준 매핑)
+        Map<Long, TradeDto> expectedMap = trades.stream()
+                .collect(Collectors.toMap(TradeDto::id, Function.identity()));
 
-            assertThat(actual.get("id").asLong()).isEqualTo(expected.id());
+        // 7. 실제 응답과 기대값 비교
+        for (JsonNode actual : contentArray) {
+            Long id = actual.get("id").asLong();
+            TradeDto expected = expectedMap.get(id);
+
+            assertThat(expected).isNotNull();
             assertThat(actual.get("postId").asLong()).isEqualTo(expected.postId());
             assertThat(actual.get("sellerId").asLong()).isEqualTo(expected.sellerId());
             assertThat(actual.get("buyerId").asLong()).isEqualTo(expected.buyerId());

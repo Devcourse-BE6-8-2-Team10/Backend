@@ -1,7 +1,6 @@
 package com.back.domain.trade.controller;
 
 import com.back.domain.files.files.service.FilesService;
-import com.back.domain.member.entity.Member;
 import com.back.domain.trade.dto.TradeDto;
 import com.back.domain.trade.entity.Trade;
 import com.back.domain.trade.repository.TradeRepository;
@@ -26,6 +25,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,32 +57,38 @@ class AdmTradeControllerTest {
     @WithUserDetails("admin@admin.com")
     @DisplayName("1. 전체 거래 목록 전체 조회 - 관리자")
     void t1() throws Exception {
-        Member loginUser = rq.getMember();
+        // 1. 기대값 준비: DB에서 모든 거래 조회
         Pageable pageable = PageRequest.of(0, 10);
-        Page<TradeDto> expectedPage = tradeService.getMyTrades(loginUser, pageable);
+        Page<TradeDto> expectedPage = tradeService.getAllTrades(pageable);
         List<TradeDto> trades = expectedPage.getContent();
-
 
         // 2. API 요청
         ResultActions resultActions = mvc.perform(get("/api/admin/trades")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print());
 
-        // 3. 응답 공통 검증
+        // 3. 응답 기본 검증
         resultActions
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
                 .andExpect(jsonPath("$.msg").value("전체 거래 조회 성공"))
-                .andExpect(jsonPath("$.data.content").isArray());
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(trades.size()));
 
-        // 4. 실제 DTO 값과 비교
+        // 4. 실제 응답값 파싱
         String json = resultActions.andReturn().getResponse().getContentAsString();
         JsonNode contentArray = objectMapper.readTree(json).path("data").path("content");
 
-        for (int i = 0; i < trades.size(); i++) {
-            TradeDto expected = trades.get(i);
-            JsonNode actual = contentArray.get(i);
+        // 5. expected 목록을 id 기준으로 매핑
+        Map<Long, TradeDto> expectedMap = trades.stream()
+                .collect(Collectors.toMap(TradeDto::id, Function.identity()));
 
-            assertThat(actual.get("id").asLong()).isEqualTo(expected.id());
+        // 6. 응답 JSON 각각을 비교
+        for (JsonNode actual : contentArray) {
+            long id = actual.get("id").asLong();
+            TradeDto expected = expectedMap.get(id);
+
+            assertThat(expected).as("id=" + id + "인 거래가 실제 기대값에 없음").isNotNull();
             assertThat(actual.get("postId").asLong()).isEqualTo(expected.postId());
             assertThat(actual.get("sellerId").asLong()).isEqualTo(expected.sellerId());
             assertThat(actual.get("buyerId").asLong()).isEqualTo(expected.buyerId());
