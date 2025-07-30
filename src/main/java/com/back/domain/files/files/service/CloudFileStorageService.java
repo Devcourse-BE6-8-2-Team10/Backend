@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
@@ -30,7 +32,7 @@ public class CloudFileStorageService implements FileStorageService {
         this.gcsStorage = gcsStorage;
     }
 
-    @Value(("${file.upload.max-size:10485760"))
+    @Value(("${file.upload.max-size:10485760}"))
     private long maxFileSize; // 최대 파일 크기 (기본값: 10MB)
 
     @Override
@@ -94,7 +96,11 @@ public class CloudFileStorageService implements FileStorageService {
             return;
         }
 
-        String objectNameToDelete = fileUrl.substring(gcsUrlPrefix.length());
+        // 수정: URL 디코딩 추가: URL에 인코딩된 특수 문자나 공백이 포함된 경우를 대비
+        String objectNameToDelete = URLDecoder.decode(
+                fileUrl.substring(gcsUrlPrefix.length()),
+                StandardCharsets.UTF_8
+        );
 
         try {
             // BlobId를 사용하여 객체 삭제
