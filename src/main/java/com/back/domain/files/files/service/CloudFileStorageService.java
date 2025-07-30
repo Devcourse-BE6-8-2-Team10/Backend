@@ -19,7 +19,7 @@ import java.util.UUID;
 public class CloudFileStorageService implements FileStorageService {
 
     // 클라우드 스토리지 버킷 이름 설정 (application.yml에서 주입)
-    @Value("${cloud.storage.bucket-name}")
+    @Value("${GCP_BUCKET_NAME}")
     private String bucketName;
 
     // Google Cloud Storage 클라이언트 객체
