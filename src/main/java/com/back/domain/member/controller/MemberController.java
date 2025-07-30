@@ -51,7 +51,7 @@ public class MemberController {
         try {
             MemberMyPageResponse response = memberService.findMyPage(memberDetails.getMember());
             return ResponseEntity.ok(
-                    new RsData<>("200-1", "마이페이지 조회 성공", response)
+                    new RsData<>(ResultCode.GET_ME_SUCCESS, "마이페이지 조회 성공", response)
             );
         } catch (NoSuchElementException e) {
             return ResponseEntity
