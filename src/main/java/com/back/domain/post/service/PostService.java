@@ -4,15 +4,16 @@ import com.back.domain.member.entity.Member;
 import com.back.domain.post.dto.PostDetailDTO;
 import com.back.domain.post.dto.PostListDTO;
 import com.back.domain.post.dto.PostRequestDTO;
+import com.back.domain.post.entity.FavoritePost;
 import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.FavoritePostRepository;
 import com.back.domain.post.repository.PostRepository;
+import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.back.global.exception.ServiceException;
 
 import java.util.List;
 
@@ -75,6 +76,34 @@ public class PostService {
                 .toList();
     }
 
+    // 찜 등록
+    @Transactional
+    public RsData<String> addFavorite(Long postId) {
+        Member member = getCurrentMemberOrThrow();
+        Post post = getPostOrThrow(postId);
+        validateAlreadyLiked(member, post, true);
+        FavoritePost favorite = FavoritePost.builder()
+                .member(member)
+                .post(post)
+                .build();
+        favoritePostRepository.save(favorite);
+        post.increaseFavoriteCnt();
+        return new RsData<>("SUCCESS", String.format("'%s' 찜 등록 성공", post.getTitle()));
+    }
+
+    // 찜 해제
+    @Transactional
+    public RsData<String> removeFavorite(Long postId) {
+        Member member = getCurrentMemberOrThrow();
+        Post post = getPostOrThrow(postId);
+        validateAlreadyLiked(member, post, false);
+        favoritePostRepository.deleteByMemberAndPost(member, post);
+        post.decreaseFavoriteCnt();
+        return new RsData<>("SUCCESS", String.format("'%s' 찜 해제 성공", post.getTitle()));
+    }
+
+    //------------------------------------------------------------------
+
     //현재 로그인 유저 확인
     private Member getCurrentMemberOrThrow() {
         Member member = rq.getMember();
@@ -82,5 +111,22 @@ public class PostService {
             throw new ServiceException("UNAUTHORIZED", "로그인이 필요합니다.");
         }
         return member;
+    }
+
+    // 찜 중복 여부 체크
+    private void validateAlreadyLiked(Member member, Post post, boolean forAdd) {
+        boolean exists = favoritePostRepository.existsByMemberAndPost(member, post);
+        if (forAdd && exists) {
+            throw new ServiceException("BAD_REQUEST", "이미 찜한 게시글입니다.");
+        }
+        if (!forAdd && !exists) {
+            throw new ServiceException("BAD_REQUEST", "찜하지 않은 게시글입니다.");
+        }
+    }
+
+    // 게시글 조회 에러
+    private Post getPostOrThrow(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다."));
     }
 }
