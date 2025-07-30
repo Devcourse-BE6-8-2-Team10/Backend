@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -44,9 +46,12 @@ public class SecurityConfig {
 
                         // WebSocket 관련 경로들
                         .requestMatchers("/chat/**").permitAll()     // WebSocket 엔드포인트 허용
+                        .requestMatchers("/chat").permitAll()        // WebSocket 핸드셰이크 경로
                         .requestMatchers("/topic/**").permitAll()    // STOMP 구독 경로 허용
+                        .requestMatchers("/queue/**").permitAll()    // 개별 사용자 큐 경로 허용
+                        .requestMatchers("/user/**").permitAll()     // 사용자별 메시지 경로 허용
                         .requestMatchers("/app/**").permitAll()      // 메시지 전송 경로 허용
-                        .requestMatchers("/api/chat/**").permitAll()
+                        // 채팅 REST API는 인증 필요로 변경
                         // CORS 설정이 필요한 경우, CORS 필터를 추가해야 합니다.
 
                         // 정적 리소스

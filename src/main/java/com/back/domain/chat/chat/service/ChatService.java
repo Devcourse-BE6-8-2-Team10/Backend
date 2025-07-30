@@ -15,6 +15,7 @@ import com.back.domain.post.repository.PostRepository;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.util.Comparator;
@@ -31,6 +32,7 @@ public class ChatService {
     private final PostRepository postRepository;
     private final RoomParticipantRepository roomParticipantRepository;
 
+    @Transactional
     public Message saveMessage(MessageDto chatMessage) {
         Member sender = memberRepository.findById(chatMessage.getSenderId())
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
@@ -43,13 +45,13 @@ public class ChatService {
 
         return messageRepository.save(message);
     }
-
+    @Transactional
     public boolean isParticipant(Long chatRoomId, Long memberId) {
         return roomParticipantRepository.existsByChatRoomIdAndMemberIdAndIsActiveTrue(chatRoomId, memberId);
     }
-
+    @Transactional
     public List<MessageDto> getChatRoomMessages(Long chatRoomId, Principal principal) {
-        Member member = memberRepository.findByName(principal.getName())
+        Member member = memberRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
         Long requesterId = member.getId();
 
@@ -74,20 +76,21 @@ public class ChatService {
                     MessageDto dto = new MessageDto();
                     dto.setSenderId(message.getSender().getId());
                     dto.setSenderName(message.getSender().getName());
+                    dto.setSenderEmail(message.getSender().getEmail());
                     dto.setChatRoomId(message.getChatRoom().getId());
                     dto.setContent(message.getContent());
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
-
-    public void createChatRoom(Long postId, String userName) {
-        if(userName == null || userName.isEmpty()) {
+    @Transactional
+    public Long createChatRoom(Long postId, String userEmail) {
+        if(userEmail == null || userEmail.isEmpty()) {
             throw new ServiceException("400-1", "로그인 하셔야 합니다.");
         }
 
-        // 사용자명으로 Member 엔티티 조회
-        Member requester = memberRepository.findByName(userName)
+        // 이메일로 Member 엔티티 조회 (JWT의 principal.getName()은 이메일을 반환)
+        Member requester = memberRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
 
         Post post = postRepository.findById(postId)
@@ -95,27 +98,52 @@ public class ChatService {
 
         Member postAuthor = post.getMember();
 
-        // 이미 해당 게시글에 해당 사용자가 만든 채팅방이 있는지 확인
-        if (chatRoomRepository.findByPostIdAndMemberId(postId, requester.getId()).isPresent()) {
-
-            throw new ServiceException("409-1", "이미 생성된 채팅방이 있습니다.");
+        // 본인 게시글에는 채팅방을 만들 수 없도록 제한
+        if (requester.getId().equals(postAuthor.getId())) {
+            throw new ServiceException("400-2", "본인의 게시글에는 채팅할 수 없습니다.");
         }
 
-        // 채팅방 생성
+        // requester가 참여한 해당 게시글의 채팅방들 찾기
+        List<RoomParticipant> requesterParticipations = roomParticipantRepository
+            .findByChatRoomPostIdAndMemberIdAndIsActiveTrue(postId, requester.getId());
+        
+        // 각 채팅방에서 postAuthor도 참여하고 있고, 참여자가 2명인지 확인
+        for (RoomParticipant participation : requesterParticipations) {
+            ChatRoom chatRoom = participation.getChatRoom();
+            
+            // 이 채팅방의 참여자 수와 postAuthor 참여 여부 확인
+            List<RoomParticipant> participants = roomParticipantRepository
+                .findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+                
+            if (participants.size() == 2) {
+                boolean hasPostAuthor = participants.stream()
+                    .anyMatch(p -> p.getMember().getId().equals(postAuthor.getId()));
+                    
+                if (hasPostAuthor) {
+                    // 1대1 채팅방 발견!
+                    return chatRoom.getId();
+                }
+            }
+        }
+
+        // 기존 1대1 채팅방이 없다면 새로 생성
         ChatRoom chatRoom = new ChatRoom(post, requester);
         ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
 
+        // 정확히 2명만 참여자로 추가
         roomParticipantRepository.save(new RoomParticipant(savedChatRoom, requester));
         roomParticipantRepository.save(new RoomParticipant(savedChatRoom, postAuthor));
-    }
 
+        return savedChatRoom.getId();
+    }
+    @Transactional
     public List<ChatRoomDto> getMyChatRooms(Principal principal) {
         if(principal == null || principal.getName() == null || principal.getName().isEmpty()) {
             throw new ServiceException("400-1", "로그인 하셔야 합니다.");
         }
 
-        // 사용자명으로 Member 엔티티 조회
-        Member member = memberRepository.findByName(principal.getName())
+        // 이메일로 Member 엔티티 조회 (JWT의 principal.getName()은 이메일을 반환)
+        Member member = memberRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
 
         // Member ID로 채팅방 조회
@@ -137,17 +165,25 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
-
+    @Transactional
     public void deleteChatRoom(Long chatRoomId) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ServiceException("404-4", "존재하지 않는 채팅방입니다."));
 
         chatRoomRepository.delete(chatRoom);
     }
-
-    public Member findByName(String name) {
-        Member member = memberRepository.findByName(name)
+    @Transactional
+    public Member findByEmail(String email) {
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
         return member;
+    }
+
+    @Transactional
+    public List<String> getParticipants(Long chatRoomId) {
+        return roomParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoomId)
+                .stream()
+                .map(participant -> participant.getMember().getEmail())
+                .collect(Collectors.toList());
     }
 }
