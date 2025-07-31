@@ -117,6 +117,22 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new RsData<>(ResultCode.PERMISSION_DENIED, "본인의 프로필 이미지만 수정할 수 있습니다."));
         }
+        // 파일 존재
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(new RsData<>(ResultCode.FILE_UPLOAD_FAIL, "업로드할 파일이 없습니다."));
+        }
+        // 파일 크기 제한 (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+            return ResponseEntity.badRequest()
+                    .body(new RsData<>(ResultCode.FILE_UPLOAD_FAIL, "파일 크기는 최대 5MB까지 허용됩니다."));
+        }
+        // 파일 타입 제한(이미지만 가능)
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image")) {
+            return ResponseEntity.badRequest()
+                    .body(new RsData<>(ResultCode.FILE_UPLOAD_FAIL, "이미지 파일만 업로드할 수 있습니다."));
+        }
         try {
             String profileUrl = memberService.uploadProfileImage(memberId, file);
             return ResponseEntity.ok(

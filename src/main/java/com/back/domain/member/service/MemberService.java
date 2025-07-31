@@ -110,19 +110,34 @@ public class MemberService {
     // 프로필 이미지 등록 및 업데이트
     @Transactional
     public String uploadProfileImage(Long memberId, MultipartFile file) {
+        // file이 null이거나 비어있는 경우 예외 처리
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
 
         // 기존 프로필 이미지가 있다면 삭제
-        if (member.getProfileUrl() != null && !member.getProfileUrl().isEmpty()) {
-            fileStorageService.deletePhysicalFile(member.getProfileUrl()); // FileStorageService를 사용하여 기존 파일 삭제
+        String oldProfileUrl = member.getProfileUrl();
+        if (oldProfileUrl != null && !oldProfileUrl.isEmpty()) {
+            try {
+                // 이전 프로필 이미지 삭제 시, 전체 URL을 넘겨야 함 (FileStorageService의 deletePhysicalFile 구현에 따라)
+                fileStorageService.deletePhysicalFile(oldProfileUrl);
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 삭제 실패: {}", oldProfileUrl, e);
+            }
         }
 
-        // 새 파일 업로드 및 URL 반환
-        String newProfileUrl = fileStorageService.storeFile(file, "profile"); // FileStorageService를 사용하여 파일 업로드, 'profile' 서브 폴더 사용
-        member.updateProfileUrl(newProfileUrl); // Member 엔티티의 profileUrl 업데이트
-        memberRepository.save(member); // 변경사항 저장
-        return newProfileUrl;
+        try {
+            // MemberService에서 파일을 저장할 때, 'profile/{memberId}'를 하위 폴더로 지정
+            String newProfileUrl = fileStorageService.storeFile(file, "profile/" + memberId); // 수정된 부분
+            member.updateProfileUrl(newProfileUrl);
+            memberRepository.save(member);
+            return newProfileUrl;
+        } catch (Exception e) {
+            throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.", e);
+        }
     }
 
     // 프로필 이미지 삭제
@@ -131,10 +146,16 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
 
-        if (member.getProfileUrl() != null && !member.getProfileUrl().isEmpty()) {
+        if (member.getProfileUrl() == null || member.getProfileUrl().isEmpty()) {
+            throw new IllegalArgumentException("삭제할 프로필 이미지가 없습니다.");
+        }
+
+        try{
             fileStorageService.deletePhysicalFile(member.getProfileUrl()); // FileStorageService를 사용하여 파일 삭제
             member.updateProfileUrl(null); // Member 엔티티의 profileUrl null로 설정
             memberRepository.save(member); // 변경사항 저장
+        } catch (Exception e) {
+            throw new RuntimeException("프로필 이미지 삭제 실패.", e);
         }
     }
 
