@@ -80,7 +80,7 @@ public class ChatService {
                             message.getSender().getId(),
                             message.getChatRoom().getId());
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
     @Transactional
     public Long createChatRoom(Long postId, String userEmail) {
