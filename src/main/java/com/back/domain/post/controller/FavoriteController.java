@@ -19,10 +19,9 @@ public class FavoriteController {
 
     @Operation(summary = "찜 등록, 해제", description = "이미 찜한 경우 해제, 찜하지 않은 경우 등록")
     @PostMapping("/{postId}")
-    public RsData<FavoriteResponseDTO> toggleFavorite(@PathVariable Long postId) {
+    public FavoriteResponseDTO toggleFavorite(@PathVariable Long postId) {
         return postService.toggleFavorite(postId);
     }
-
 
 
 }

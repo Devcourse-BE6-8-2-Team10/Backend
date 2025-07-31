@@ -78,7 +78,7 @@ public class PostService {
 
     //찜 등록 및 해제
     @Transactional
-    public RsData<FavoriteResponseDTO> toggleFavorite(Long postId) {
+    public FavoriteResponseDTO toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
         Post post = getPostOrThrow(postId);
 
@@ -87,9 +87,12 @@ public class PostService {
         if (alreadyLiked) {
             favoritePostRepository.deleteByMemberAndPost(member, post);
             post.decreaseFavoriteCnt();
-
-            FavoriteResponseDTO response = new FavoriteResponseDTO(false, post.getFavoriteCnt(), String.format("'%s' 찜 해제", post.getTitle()));
-            return new RsData<>("SUCCESS", "찜 해제 성공", response);
+            return new FavoriteResponseDTO(
+                    post.getId(),
+                    false,
+                    post.getFavoriteCnt(),
+                    String.format("'%s' 찜 해제", post.getTitle())
+            );
         } else {
             FavoritePost favorite = FavoritePost.builder()
                     .member(member)
@@ -97,9 +100,12 @@ public class PostService {
                     .build();
             favoritePostRepository.save(favorite);
             post.increaseFavoriteCnt();
-
-            FavoriteResponseDTO response = new FavoriteResponseDTO(true, post.getFavoriteCnt(), String.format("'%s' 찜 등록", post.getTitle()));
-            return new RsData<>("SUCCESS", "찜 등록 성공", response);
+            return new FavoriteResponseDTO(
+                    post.getId(),
+                    true,
+                    post.getFavoriteCnt(),
+                    String.format("'%s' 찜 등록", post.getTitle())
+            );
         }
     }
 
