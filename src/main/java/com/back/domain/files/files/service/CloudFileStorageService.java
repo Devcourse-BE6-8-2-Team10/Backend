@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("prod") // 프로덕션 환경에서만 이 서비스가 활성화되도록 설정
+@Profile("dev") // 프로덕션 환경에서만 이 서비스가 활성화되도록 설정
 public class CloudFileStorageService implements FileStorageService {
 
     // 클라우드 스토리지 버킷 이름 설정 (application.yml에서 주입)

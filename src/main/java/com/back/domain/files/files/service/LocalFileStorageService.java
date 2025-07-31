@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("dev")
+@Profile("prod")
 public class LocalFileStorageService implements FileStorageService {
 
     // === 로컬 저장 경로 ===
