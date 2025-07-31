@@ -12,7 +12,7 @@ public record TradeDto(
         @NonNull Long postId,
         @NonNull Long sellerId,
         @NonNull Long buyerId,
-        @NonNull int price,
+        int price,
         @NonNull String status,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         @NonNull LocalDateTime createdAt

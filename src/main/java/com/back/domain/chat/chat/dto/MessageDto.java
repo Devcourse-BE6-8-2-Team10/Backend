@@ -1,22 +1,58 @@
 package com.back.domain.chat.chat.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.Objects;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class MessageDto {
-    private String sender;
+    private Long senderId;
+    private Long chatRoomId;
+
+    @JsonProperty("senderName")
+    private String senderName;
+    @NonNull
+    private String senderEmail;
+    @NonNull
     private String content;
 
-    public MessageDto() {
+    // Jackson JSON 역직렬화를 위한 sender 필드 (senderName과 동일)
+
+//    private String sender;
+
+    @JsonCreator
+    public MessageDto(
+            @JsonProperty("senderId") Long senderId,
+            @JsonProperty("chatRoomId") Long chatRoomId,
+            @JsonProperty("senderName") String senderName,
+            @JsonProperty("senderEmail") String senderEmail,
+            @JsonProperty("content") String content) {
+        this.senderId = senderId;
+        this.chatRoomId = chatRoomId;
+        this.senderName = senderName;
+        this.senderEmail = senderEmail;
+        this.content = content;
+
     }
 
-    public MessageDto(String sender, String content) {
-        this.sender = sender;
+    public MessageDto(String senderName, String content, Long senderId, Long chatRoomId) {
+        this.senderName = senderName;
         this.content = content;
+        this.senderId = senderId;
+        this.chatRoomId = chatRoomId;
+    }
+
+
+    public void setSender(String sender) {
+//        this.sender = sender;
+        this.senderName = sender;
     }
 
     // 테스트 비교용 equals(), hashCode() 오버라이딩도 추천
@@ -25,11 +61,14 @@ public class MessageDto {
         if (this == o) return true;
         if (!(o instanceof MessageDto)) return false;
         MessageDto messageDto = (MessageDto) o;
-        return sender.equals(messageDto.sender) && content.equals(messageDto.content);
+        return Objects.equals(senderId, messageDto.senderId) &&
+                Objects.equals(content, messageDto.content) &&
+                Objects.equals(chatRoomId, messageDto.chatRoomId) &&
+                Objects.equals(senderEmail, messageDto.senderEmail);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sender, content);
+        return Objects.hash(senderId, content, chatRoomId, senderEmail);
     }
 }
