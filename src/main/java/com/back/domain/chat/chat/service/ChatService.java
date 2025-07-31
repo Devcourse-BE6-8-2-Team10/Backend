@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.Principal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -197,14 +196,5 @@ public class ChatService {
                 .orElseThrow(() -> new ServiceException("404-4", "존재하지 않는 채팅방입니다."));
 
         chatRoomRepository.delete(chatRoom);
-    }
-
-
-    @Transactional
-    public List<String> getParticipants(Long chatRoomId) {
-        return roomParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoomId)
-                .stream()
-                .map(participant -> participant.getMember().getEmail())
-                .collect(Collectors.toList());
     }
 }
