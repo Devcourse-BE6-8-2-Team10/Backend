@@ -134,7 +134,8 @@ public class ChatService {
     /**
      * 기존 1대1 채팅방을 찾는 메서드 (양방향 검색)
      */
-    private Long findExistingChatRoom(Long postId, Long requesterId, Long postAuthorId) {
+    @Transactional
+    public Long findExistingChatRoom(Long postId, Long requesterId, Long postAuthorId) {
         // 요청자가 참여한 해당 게시글의 채팅방들 찾기
         List<RoomParticipant> requesterParticipations = roomParticipantRepository
             .findByChatRoomPostIdAndMemberIdAndIsActiveTrue(postId, requesterId);
