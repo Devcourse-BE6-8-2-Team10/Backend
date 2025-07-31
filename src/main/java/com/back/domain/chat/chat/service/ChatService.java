@@ -98,11 +98,6 @@ public class ChatService {
 
         Member postAuthor = post.getMember();
 
-//        // 본인 게시글에는 채팅방을 만들 수 없도록 제한
-//        if (requester.getId().equals(postAuthor.getId())) {
-//            throw new ServiceException("400-2", "본인의 게시글에는 채팅할 수 없습니다.");
-//        }
-
         System.out.println("=== 채팅방 생성 시작 ===");
         System.out.println("요청자: " + requester.getEmail() + " (ID: " + requester.getId() + ")");
         System.out.println("게시글 작성자: " + postAuthor.getEmail() + " (ID: " + postAuthor.getId() + ")");
