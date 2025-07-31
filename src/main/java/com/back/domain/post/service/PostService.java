@@ -1,6 +1,7 @@
 package com.back.domain.post.service;
 
 import com.back.domain.member.entity.Member;
+import com.back.domain.post.dto.FavoriteResponseDTO;
 import com.back.domain.post.dto.PostDetailDTO;
 import com.back.domain.post.dto.PostListDTO;
 import com.back.domain.post.dto.PostRequestDTO;
@@ -77,7 +78,7 @@ public class PostService {
 
     //찜 등록 및 해제
     @Transactional
-    public RsData<String> toggleFavorite(Long postId) {
+    public RsData<FavoriteResponseDTO> toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
         Post post = getPostOrThrow(postId);
 
@@ -86,7 +87,9 @@ public class PostService {
         if (alreadyLiked) {
             favoritePostRepository.deleteByMemberAndPost(member, post);
             post.decreaseFavoriteCnt();
-            return new RsData<>("SUCCESS", String.format("'%s' 찜 해제", post.getTitle()));
+
+            FavoriteResponseDTO response = new FavoriteResponseDTO(false, post.getFavoriteCnt(), String.format("'%s' 찜 해제", post.getTitle()));
+            return new RsData<>("SUCCESS", "찜 해제 성공", response);
         } else {
             FavoritePost favorite = FavoritePost.builder()
                     .member(member)
@@ -94,9 +97,12 @@ public class PostService {
                     .build();
             favoritePostRepository.save(favorite);
             post.increaseFavoriteCnt();
-            return new RsData<>("SUCCESS", String.format("'%s' 찜 등록", post.getTitle()));
+
+            FavoriteResponseDTO response = new FavoriteResponseDTO(true, post.getFavoriteCnt(), String.format("'%s' 찜 등록", post.getTitle()));
+            return new RsData<>("SUCCESS", "찜 등록 성공", response);
         }
     }
+
 
     //------------------------------------------------------------------
 
