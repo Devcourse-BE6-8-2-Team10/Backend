@@ -29,8 +29,7 @@ public class MessageDto {
             @JsonProperty("chatRoomId") Long chatRoomId,
             @JsonProperty("senderName") String senderName,
             @JsonProperty("senderEmail") String senderEmail,
-            @JsonProperty("content") String content,
-            @JsonProperty("sender") String sender) {
+            @JsonProperty("content") String content) {
         this.senderId = senderId;
         this.chatRoomId = chatRoomId;
         this.senderName = senderName;
