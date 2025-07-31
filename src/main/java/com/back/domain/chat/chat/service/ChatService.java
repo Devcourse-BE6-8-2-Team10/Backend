@@ -110,13 +110,6 @@ public class ChatService {
             System.out.println("멤버: " + m.getEmail() + " (ID: " + m.getId() + ")");
         }
 
-        // 채팅방 4번 참여자 확인
-        System.out.println("=== 채팅방 4번 참여자 확인 ===");
-        List<RoomParticipant> participants4 = roomParticipantRepository.findByChatRoomIdAndIsActiveTrue(4L);
-        for (RoomParticipant p : participants4) {
-            System.out.println("참여자: " + p.getMember().getEmail() + " (ID: " + p.getMember().getId() + ")");
-        }
-
         // 더 정확한 채팅방 찾기 로직 (양방향 검색)
         Long existingChatRoomId = findExistingChatRoom(postId, requester.getId(), postAuthor.getId());
 
