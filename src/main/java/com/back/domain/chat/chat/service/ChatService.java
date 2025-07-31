@@ -179,7 +179,7 @@ public class ChatService {
                 .map(chatRoom -> {
                     // 마지막 메시지 조회
                     Message lastMessage = messageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoom.getId());
-                    String lastContent = (lastMessage != null) ? lastMessage.getContent() : "메시지가 없습니다.";
+                    String lastContent = (lastMessage != null) ? lastMessage.getContent() : "대화를 시작해보세요.";
 
                     return new ChatRoomDto(
                         chatRoom.getId(),
@@ -188,7 +188,7 @@ public class ChatService {
                         lastContent
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -198,6 +198,7 @@ public class ChatService {
 
         chatRoomRepository.delete(chatRoom);
     }
+
     @Transactional
     public Member findByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
