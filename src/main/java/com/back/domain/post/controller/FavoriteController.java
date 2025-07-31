@@ -13,17 +13,12 @@ public class FavoriteController {
 
     private final PostService postService;
 
-    @Operation(summary = "찜 등록")
+    @Operation(summary = "찜 등록, 해제", description = "이미 찜한 경우 해제, 찜하지 않은 경우 등록")
     @PostMapping("/{postId}")
-    public RsData<String> addFavorite(@PathVariable Long postId) {
-        return postService.addFavorite(postId);
+    public RsData<String> toggleFavorite(@PathVariable Long postId) {
+        return postService.toggleFavorite(postId);
     }
 
-    @Operation(summary = "찜 해제")
-    @DeleteMapping("/{postId}")
-    public RsData<String> removeFavorite(@PathVariable Long postId) {
-        return postService.removeFavorite(postId);
-    }
 
 }
 

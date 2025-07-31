@@ -60,8 +60,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public RsData<PostDetailDTO> getPostDetail(Long postId) {
         Member member = getCurrentMemberOrThrow();
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다"));
+        Post post = getPostOrThrow(postId);
 
         boolean isLiked = favoritePostRepository.existsByMemberAndPost(member, post);
         return new RsData<>("SUCCESS", "게시글 조회 성공", new PostDetailDTO(post, isLiked));
@@ -76,30 +75,27 @@ public class PostService {
                 .toList();
     }
 
-    // 찜 등록
+    //찜 등록 및 해제
     @Transactional
-    public RsData<String> addFavorite(Long postId) {
+    public RsData<String> toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
         Post post = getPostOrThrow(postId);
-        validateAlreadyLiked(member, post, true);
-        FavoritePost favorite = FavoritePost.builder()
-                .member(member)
-                .post(post)
-                .build();
-        favoritePostRepository.save(favorite);
-        post.increaseFavoriteCnt();
-        return new RsData<>("SUCCESS", String.format("'%s' 찜 등록 성공", post.getTitle()));
-    }
 
-    // 찜 해제
-    @Transactional
-    public RsData<String> removeFavorite(Long postId) {
-        Member member = getCurrentMemberOrThrow();
-        Post post = getPostOrThrow(postId);
-        validateAlreadyLiked(member, post, false);
-        favoritePostRepository.deleteByMemberAndPost(member, post);
-        post.decreaseFavoriteCnt();
-        return new RsData<>("SUCCESS", String.format("'%s' 찜 해제 성공", post.getTitle()));
+        boolean alreadyLiked = favoritePostRepository.existsByMemberAndPost(member, post);
+
+        if (alreadyLiked) {
+            favoritePostRepository.deleteByMemberAndPost(member, post);
+            post.decreaseFavoriteCnt();
+            return new RsData<>("SUCCESS", String.format("'%s' 찜 해제", post.getTitle()));
+        } else {
+            FavoritePost favorite = FavoritePost.builder()
+                    .member(member)
+                    .post(post)
+                    .build();
+            favoritePostRepository.save(favorite);
+            post.increaseFavoriteCnt();
+            return new RsData<>("SUCCESS", String.format("'%s' 찜 등록", post.getTitle()));
+        }
     }
 
     //------------------------------------------------------------------
@@ -111,17 +107,6 @@ public class PostService {
             throw new ServiceException("UNAUTHORIZED", "로그인이 필요합니다.");
         }
         return member;
-    }
-
-    // 찜 중복 여부 체크
-    private void validateAlreadyLiked(Member member, Post post, boolean forAdd) {
-        boolean exists = favoritePostRepository.existsByMemberAndPost(member, post);
-        if (forAdd && exists) {
-            throw new ServiceException("BAD_REQUEST", "이미 찜한 게시글입니다.");
-        }
-        if (!forAdd && !exists) {
-            throw new ServiceException("BAD_REQUEST", "찜하지 않은 게시글입니다.");
-        }
     }
 
     // 게시글 조회 에러
