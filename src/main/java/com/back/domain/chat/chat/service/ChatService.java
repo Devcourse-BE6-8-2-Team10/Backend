@@ -75,13 +75,10 @@ public class ChatService {
         // Entity -> DTO 변환
         return messages.stream()
                 .map(message -> {
-                    MessageDto dto = new MessageDto();
-                    dto.setSenderId(message.getSender().getId());
-                    dto.setSenderName(message.getSender().getName());
-                    dto.setSenderEmail(message.getSender().getEmail());
-                    dto.setChatRoomId(message.getChatRoom().getId());
-                    dto.setContent(message.getContent());
-                    return dto;
+                    return new MessageDto(message.getSender().getName(),
+                            message.getContent(),
+                            message.getSender().getId(),
+                            message.getChatRoom().getId());
                 })
                 .collect(Collectors.toList());
     }
