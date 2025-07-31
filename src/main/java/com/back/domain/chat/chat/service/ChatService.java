@@ -14,6 +14,7 @@ import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -98,27 +100,27 @@ public class ChatService {
 
         Member postAuthor = post.getMember();
 
-        System.out.println("=== 채팅방 생성 시작 ===");
-        System.out.println("요청자: " + requester.getEmail() + " (ID: " + requester.getId() + ")");
-        System.out.println("게시글 작성자: " + postAuthor.getEmail() + " (ID: " + postAuthor.getId() + ")");
-        System.out.println("게시글 ID: " + postId);
+        log.debug("=== 채팅방 생성 시작 ===");
+        log.debug("요청자: " + requester.getEmail() + " (ID: " + requester.getId() + ")");
+        log.debug("게시글 작성자: " + postAuthor.getEmail() + " (ID: " + postAuthor.getId() + ")");
+        log.debug("게시글 ID: " + postId);
 
-        // 전체 멤버 확인
-        System.out.println("=== 전체 멤버 확인 ===");
+
+        log.debug("=== 전체 멤버 확인 ===");
         List<Member> allMembers = memberRepository.findAll();
         for (Member m : allMembers) {
-            System.out.println("멤버: " + m.getEmail() + " (ID: " + m.getId() + ")");
+            log.debug("멤버: " + m.getEmail() + " (ID: " + m.getId() + ")");
         }
 
         // 더 정확한 채팅방 찾기 로직 (양방향 검색)
         Long existingChatRoomId = findExistingChatRoom(postId, requester.getId(), postAuthor.getId());
 
         if (existingChatRoomId != null) {
-            System.out.println("✅ 기존 채팅방 발견: " + existingChatRoomId);
+            log.debug("기존 채팅방 발견: " + existingChatRoomId);
             return existingChatRoomId;
         }
 
-        System.out.println("🆕 새 채팅방 생성 시작");
+        log.debug("새 채팅방 생성 시작");
 
         // 기존 1대1 채팅방이 없다면 새로 생성
         ChatRoom chatRoom = new ChatRoom(post, requester);
@@ -128,7 +130,7 @@ public class ChatService {
         roomParticipantRepository.save(new RoomParticipant(savedChatRoom, requester));
         roomParticipantRepository.save(new RoomParticipant(savedChatRoom, postAuthor));
 
-        System.out.println("✅ 새 채팅방 생성 완료: " + savedChatRoom.getId());
+        log.debug("✅ 새 채팅방 생성 완료: " + savedChatRoom.getId());
         return savedChatRoom.getId();
     }
 
@@ -140,7 +142,7 @@ public class ChatService {
         List<RoomParticipant> requesterParticipations = roomParticipantRepository
             .findByChatRoomPostIdAndMemberIdAndIsActiveTrue(postId, requesterId);
 
-        System.out.println("요청자가 참여한 채팅방 수: " + requesterParticipations.size());
+        log.debug("요청자가 참여한 채팅방 수: " + requesterParticipations.size());
 
         // 각 채팅방에서 postAuthor도 참여하고 있고, 참여자가 2명인지 확인
         for (RoomParticipant participation : requesterParticipations) {
@@ -150,14 +152,14 @@ public class ChatService {
             List<RoomParticipant> participants = roomParticipantRepository
                 .findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
 
-            System.out.println("채팅방 " + chatRoom.getId() + " 참여자 수: " + participants.size());
+            log.debug("채팅방 " + chatRoom.getId() + " 참여자 수: " + participants.size());
 
             if (participants.size() == 2) {
                 boolean hasPostAuthor = participants.stream()
                     .anyMatch(p -> p.getMember().getId().equals(postAuthorId));
 
                 if (hasPostAuthor) {
-                    System.out.println("🎯 1대1 채팅방 발견: " + chatRoom.getId());
+                    log.debug(" 1대1 채팅방 발견: " + chatRoom.getId());
                     return chatRoom.getId();
                 }
             }
@@ -167,7 +169,7 @@ public class ChatService {
         List<RoomParticipant> authorParticipations = roomParticipantRepository
             .findByChatRoomPostIdAndMemberIdAndIsActiveTrue(postId, postAuthorId);
 
-        System.out.println("게시글 작성자가 참여한 채팅방 수: " + authorParticipations.size());
+        log.debug("게시글 작성자가 참여한 채팅방 수: " + authorParticipations.size());
 
         for (RoomParticipant participation : authorParticipations) {
             ChatRoom chatRoom = participation.getChatRoom();
@@ -180,7 +182,7 @@ public class ChatService {
                     .anyMatch(p -> p.getMember().getId().equals(requesterId));
 
                 if (hasRequester) {
-                    System.out.println("🎯 1대1 채팅방 발견 (역방향): " + chatRoom.getId());
+                    log.debug(" 1대1 채팅방 발견 (역방향): " + chatRoom.getId());
                     return chatRoom.getId();
                 }
             }
