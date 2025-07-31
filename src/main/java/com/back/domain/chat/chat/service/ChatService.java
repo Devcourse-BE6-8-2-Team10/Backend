@@ -131,9 +131,6 @@ public class ChatService {
         return savedChatRoom.getId();
     }
 
-    /**
-     * 기존 1대1 채팅방을 찾는 메서드 (양방향 검색)
-     */
     @Transactional
     public Long findExistingChatRoom(Long postId, Long requesterId, Long postAuthorId) {
         // 요청자가 참여한 해당 게시글의 채팅방들 찾기
@@ -162,32 +159,9 @@ public class ChatService {
                 }
             }
         }
-
-        // 반대로 postAuthor가 참여한 채팅방에서도 검색
-        List<RoomParticipant> authorParticipations = roomParticipantRepository
-            .findByChatRoomPostIdAndMemberIdAndIsActiveTrue(postId, postAuthorId);
-
-        log.debug("게시글 작성자가 참여한 채팅방 수: " + authorParticipations.size());
-
-        for (RoomParticipant participation : authorParticipations) {
-            ChatRoom chatRoom = participation.getChatRoom();
-
-            List<RoomParticipant> participants = roomParticipantRepository
-                .findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
-
-            if (participants.size() == 2) {
-                boolean hasRequester = participants.stream()
-                    .anyMatch(p -> p.getMember().getId().equals(requesterId));
-
-                if (hasRequester) {
-                    log.debug(" 1대1 채팅방 발견 (역방향): " + chatRoom.getId());
-                    return chatRoom.getId();
-                }
-            }
-        }
-
         return null; // 기존 채팅방 없음
     }
+
     @Transactional
     public List<ChatRoomDto> getMyChatRooms(Principal principal) {
         if(principal == null || principal.getName() == null || principal.getName().isEmpty()) {
