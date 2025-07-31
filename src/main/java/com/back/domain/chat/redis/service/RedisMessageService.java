@@ -1,6 +1,7 @@
 package com.back.domain.chat.redis.service;
 
 import com.back.domain.chat.chat.dto.MessageDto;
+import com.back.global.exception.ServiceException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class RedisMessageService {
             log.info("=== Redis로 메시지 발행 ===");
             log.info("채팅방: {}, 발신자: {}, 내용: {}",
                     message.getChatRoomId(),
-                    message.getSender(),
+                    message.getSenderName(),
                     message.getContent());
 
             // MessageDto를 JSON 문자열로 변환
@@ -39,7 +40,7 @@ public class RedisMessageService {
 
         } catch (Exception e) {
             log.error("Redis 메시지 발행 중 에러 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("메시지 발행 실패", e);
+            throw new ServiceException("400-1","메시지 발행 실패");
         }
     }
 
@@ -63,7 +64,7 @@ public class RedisMessageService {
 
         } catch (Exception e) {
             log.error("채팅방별 메시지 발행 중 에러 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("채팅방별 메시지 발행 실패", e);
+            throw new ServiceException("400-1","메시지 발행 실패");
         }
     }
 }

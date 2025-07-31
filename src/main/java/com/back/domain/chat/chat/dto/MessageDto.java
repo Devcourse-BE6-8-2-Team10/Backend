@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.Objects;
@@ -15,13 +16,16 @@ public class MessageDto {
     private Long senderId;
     private Long chatRoomId;
 
+    @JsonProperty("senderName")
     private String senderName;
+    @NonNull
     private String senderEmail;
+    @NonNull
     private String content;
 
     // Jackson JSON 역직렬화를 위한 sender 필드 (senderName과 동일)
-    @JsonProperty("sender")
-    private String sender;
+
+//    private String sender;
 
     @JsonCreator
     public MessageDto(
@@ -29,32 +33,25 @@ public class MessageDto {
             @JsonProperty("chatRoomId") Long chatRoomId,
             @JsonProperty("senderName") String senderName,
             @JsonProperty("senderEmail") String senderEmail,
-            @JsonProperty("content") String content,
-            @JsonProperty("sender") String sender) {
+            @JsonProperty("content") String content) {
         this.senderId = senderId;
         this.chatRoomId = chatRoomId;
         this.senderName = senderName;
         this.senderEmail = senderEmail;
         this.content = content;
-        this.sender = sender != null ? sender : senderName; // sender가 null이면 senderName 사용
+
     }
 
     public MessageDto(String senderName, String content, Long senderId, Long chatRoomId) {
         this.senderName = senderName;
-        this.sender = senderName; // 동기화
         this.content = content;
         this.senderId = senderId;
         this.chatRoomId = chatRoomId;
     }
 
-    // senderName과 sender 동기화
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
-        this.sender = senderName;
-    }
 
     public void setSender(String sender) {
-        this.sender = sender;
+//        this.sender = sender;
         this.senderName = sender;
     }
 
