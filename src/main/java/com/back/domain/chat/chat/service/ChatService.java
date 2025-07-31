@@ -109,7 +109,7 @@ public class ChatService {
             log.debug("멤버: " + m.getEmail() + " (ID: " + m.getId() + ")");
         }
 
-        // 더 정확한 채팅방 찾기 로직 (양방향 검색)
+
         Long existingChatRoomId = findExistingChatRoom(postId, requester.getId(), postAuthor.getId());
 
         if (existingChatRoomId != null) {
@@ -199,12 +199,6 @@ public class ChatService {
         chatRoomRepository.delete(chatRoom);
     }
 
-    @Transactional
-    public Member findByEmail(String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
-        return member;
-    }
 
     @Transactional
     public List<String> getParticipants(Long chatRoomId) {
