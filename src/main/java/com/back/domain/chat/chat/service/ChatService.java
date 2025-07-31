@@ -86,7 +86,7 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
     @Transactional
-    public synchronized Long createChatRoom(Long postId, String userEmail) {
+    public Long createChatRoom(Long postId, String userEmail) {
         if(userEmail == null || userEmail.isEmpty()) {
             throw new ServiceException("400-1", "로그인 하셔야 합니다.");
         }
