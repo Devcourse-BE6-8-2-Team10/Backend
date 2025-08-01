@@ -60,6 +60,7 @@ public class AuthController {
         accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
         accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
         response.addCookie(accessTokenCookie);
+        response.setHeader("Set-Cookie", response.getHeader("Set-Cookie") + "; SameSite=Strict");
         
         // RefreshToken을 HttpOnly 쿠키로 설정 (보안용)
         Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.refreshToken());
@@ -108,12 +109,14 @@ public class AuthController {
         // AccessToken 쿠키 삭제
         Cookie accessTokenCookie = new Cookie("accessToken", "");
         accessTokenCookie.setPath("/");
+        accessTokenCookie.setHttpOnly(false);
         accessTokenCookie.setMaxAge(0);
         response.addCookie(accessTokenCookie);
         
         // RefreshToken 쿠키 삭제
         Cookie refreshTokenCookie = new Cookie("refreshToken", "");
         refreshTokenCookie.setPath("/");
+        accessTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setMaxAge(0);
         response.addCookie(refreshTokenCookie);
 
@@ -135,6 +138,7 @@ public class AuthController {
         accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
         accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
         response.addCookie(accessTokenCookie);
+        response.setHeader("Set-Cookie", response.getHeader("Set-Cookie") + "; SameSite=Strict");
         
         // 새로운 RefreshToken을 쿠키에 설정
         Cookie refreshTokenCookie = new Cookie("refreshToken", reissueResponse.refreshToken());
