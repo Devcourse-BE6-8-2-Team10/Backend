@@ -1,10 +1,7 @@
 package com.back.domain.post.service;
 
 import com.back.domain.member.entity.Member;
-import com.back.domain.post.dto.FavoriteResponseDTO;
-import com.back.domain.post.dto.PostDetailDTO;
-import com.back.domain.post.dto.PostListDTO;
-import com.back.domain.post.dto.PostRequestDTO;
+import com.back.domain.post.dto.*;
 import com.back.domain.post.entity.FavoritePost;
 import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.FavoritePostRepository;
@@ -80,7 +77,7 @@ public class PostService {
     @Transactional
     public FavoriteResponseDTO toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
-        Post post = getPostOrThrow(postId);
+        Post post = getPostForUpdateOrThrow(postId);
 
         // 본인 게시글 찜 금지
         if (post.getMember().equals(member)) {
@@ -129,8 +126,6 @@ public class PostService {
         }
     }
 
-
-
     //------------------------------------------------------------------
 
     //현재 로그인 유저 확인
@@ -147,4 +142,11 @@ public class PostService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다."));
     }
+
+    // 찜 기능 시 동기화 문제 처리 락
+    private Post getPostForUpdateOrThrow(Long postId) {
+        return postRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> new ServiceException("NOT_FOUND", "오류 입니다."));
+    }
+
 }

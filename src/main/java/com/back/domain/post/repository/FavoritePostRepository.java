@@ -14,7 +14,7 @@ public interface FavoritePostRepository extends JpaRepository<FavoritePost, Long
     // 찜 여부 확인 (중복 방지)
     boolean existsByMemberAndPost(Member member, Post post);
     // 게시글 삭제 시 찜 삭제
-    void deleteAllByPost(Member member, Post post);
+    void deleteAllByPost(Post post);
     // 찜 취소 기능
     void deleteByMemberAndPost(Member member, Post post);
 
