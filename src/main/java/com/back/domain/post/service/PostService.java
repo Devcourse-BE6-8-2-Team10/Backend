@@ -77,6 +77,7 @@ public class PostService {
                 .toList();
     }
 
+    //찜 등록 해제
     @Transactional
     public FavoriteResponseDTO toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
@@ -91,18 +92,29 @@ public class PostService {
         if (alreadyLiked) {
             favoritePostRepository.deleteByMemberAndPost(member, post);
             postRepository.decreaseFavoriteCnt(postId);
-            return new FavoriteResponseDTO(post.getId(), false, post.getFavoriteCnt(), String.format("'%s' 찜 해제 완료", post.getTitle()));
-        } else {
-            try {
-                favoritePostRepository.save(FavoritePost.builder().member(member).post(post).build());
-                postRepository.increaseFavoriteCnt(postId);
-                return new FavoriteResponseDTO(post.getId(), true, post.getFavoriteCnt(), String.format("'%s' 찜 등록 완료", post.getTitle()));
-            } catch (Exception e) {
-                throw new ServiceException("CONFLICT", "이미 찜한 게시글입니다.");
-            }
-        }
+            int newFavoriteCnt = postRepository.getFavoriteCnt(postId);
 
+            return new FavoriteResponseDTO(
+                    post.getId(), false, newFavoriteCnt,
+                    String.format("'%s' 찜 해제 완료", post.getTitle())
+            );
+        } else {
+            favoritePostRepository.save(FavoritePost.builder()
+                    .member(member)
+                    .post(post)
+                    .build());
+
+            postRepository.increaseFavoriteCnt(postId);
+            int newFavoriteCnt = postRepository.getFavoriteCnt(postId);
+
+            return new FavoriteResponseDTO(
+                    post.getId(), true, newFavoriteCnt,
+                    String.format("'%s' 찜 등록 완료", post.getTitle())
+            );
+        }
     }
+
+
 
     //찜 목록 조회
     @Transactional(readOnly = true)
