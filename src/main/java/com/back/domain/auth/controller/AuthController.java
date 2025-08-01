@@ -13,12 +13,12 @@ import com.back.global.rsData.ResultCode;
 import com.back.global.rsData.RsData;
 import com.back.global.security.auth.MemberDetails;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -51,24 +51,29 @@ public class AuthController {
     public ResponseEntity<RsData<MemberLoginResponse>> login(
             @Valid @RequestBody MemberLoginRequest request,
             HttpServletResponse response) {
+        // 로그인 요청 처리
         MemberLoginResponse loginResponse = authService.login(request);
-        
-        // AccessToken을 쿠키로 설정 (자동 전송용)
-        Cookie accessTokenCookie = new Cookie("accessToken", loginResponse.accessToken());
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(false); // JavaScript에서 접근 가능하도록 false
-        accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
-        accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
-        response.addCookie(accessTokenCookie);
-        response.setHeader("Set-Cookie", response.getHeader("Set-Cookie") + "; SameSite=Strict");
-        
-        // RefreshToken을 HttpOnly 쿠키로 설정 (보안용)
-        Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.refreshToken());
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
-        refreshTokenCookie.setMaxAge((int) (refreshTokenValidity / 1000)); // application.yml과 일치
-        response.addCookie(refreshTokenCookie);
+
+        // AccessToken 쿠키 생성 (자동 전송용)
+        ResponseCookie accessTokenCookie = createCookie(
+                "accessToken",
+                loginResponse.accessToken(),
+                (int) (accessTokenValidity / 1000), // application.yml과 일치
+                false, // 프로덕션 환경에서는 true
+                false // prod 환경이면 true로 분기
+        );
+
+        // RefreshToken 쿠키 생성 (HttpOnly 쿠키로 설정, 보안용)
+        ResponseCookie refreshTokenCookie = createCookie(
+                "refreshToken",
+                loginResponse.refreshToken(),
+                (int) (refreshTokenValidity / 1000), // application.yml과 일치
+                true,
+                false // 프로덕션 환경에서는 true
+        );
+
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
         
         return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "로그인 성공", loginResponse));
     }
@@ -107,18 +112,13 @@ public class AuthController {
         authService.logout(member);
 
         // AccessToken 쿠키 삭제
-        Cookie accessTokenCookie = new Cookie("accessToken", "");
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(false);
-        accessTokenCookie.setMaxAge(0);
-        response.addCookie(accessTokenCookie);
+        ResponseCookie accessTokenCookie = createCookie("accessToken", "", 0, false, false);
         
         // RefreshToken 쿠키 삭제
-        Cookie refreshTokenCookie = new Cookie("refreshToken", "");
-        refreshTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setMaxAge(0);
-        response.addCookie(refreshTokenCookie);
+        ResponseCookie refreshTokenCookie = createCookie("refreshToken", "", 0, true, false);
+
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
 
         return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "로그아웃 성공", null));
     }
@@ -132,22 +132,37 @@ public class AuthController {
         TokenReissueResponse reissueResponse = authService.reissueAccessToken(request);
         
         // 새로운 AccessToken을 쿠키에 설정
-        Cookie accessTokenCookie = new Cookie("accessToken", reissueResponse.accessToken());
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(false); // JavaScript에서 접근 가능하도록 false
-        accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
-        accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
-        response.addCookie(accessTokenCookie);
-        response.setHeader("Set-Cookie", response.getHeader("Set-Cookie") + "; SameSite=Strict");
+        ResponseCookie accessTokenCookie = createCookie(
+                "accessToken",
+                reissueResponse.accessToken(),
+                (int) (accessTokenValidity / 1000),
+                false,
+                false
+        );
         
         // 새로운 RefreshToken을 쿠키에 설정
-        Cookie refreshTokenCookie = new Cookie("refreshToken", reissueResponse.refreshToken());
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
-        refreshTokenCookie.setMaxAge((int) (refreshTokenValidity / 1000)); // application.yml과 일치
-        response.addCookie(refreshTokenCookie);
+        ResponseCookie refreshTokenCookie = createCookie(
+                "refreshToken",
+                reissueResponse.refreshToken(),
+                (int) (refreshTokenValidity / 1000),
+                true,
+                false
+        );
+
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
         
         return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "토큰 재발급 성공", reissueResponse));
+    }
+
+    // 쿠키 생성 메소드
+    private ResponseCookie createCookie(String name, String value, int maxAge, boolean httpOnly, boolean secure) {
+        return ResponseCookie.from(name, value)
+                .path("/")
+                .httpOnly(httpOnly)
+                .secure(secure)
+                .sameSite("Strict")
+                .maxAge(maxAge)
+                .build();
     }
 }
