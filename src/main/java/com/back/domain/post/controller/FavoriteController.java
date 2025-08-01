@@ -2,7 +2,6 @@ package com.back.domain.post.controller;
 
 import com.back.domain.post.dto.FavoriteResponseDTO;
 import com.back.domain.post.service.PostService;
-import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
