@@ -76,7 +76,7 @@ public class PostService {
     @Transactional
     public FavoriteResponseDTO toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
-        Post post = getPostForUpdateOrThrow(postId);
+        Post post = getPostForUpdateOrThrow(postId); // PESSIMISTIC_WRITE로 동시성 제어
 
         if (post.getMember().equals(member)) {
             return new FavoriteResponseDTO(post.getId(), false, post.getFavoriteCnt(), "자신의 게시글은 찜할 수 없습니다.");
@@ -85,20 +85,40 @@ public class PostService {
         boolean alreadyLiked = favoritePostRepository.existsByMemberAndPost(member, post);
 
         if (alreadyLiked) {
+            // 찜 해제
             favoritePostRepository.deleteByMemberAndPost(member, post);
             postRepository.decreaseFavoriteCnt(postId);
-            return new FavoriteResponseDTO(post.getId(), false, post.getFavoriteCnt(), String.format("'%s' 찜 해제 완료", post.getTitle()));
+
+            //DB에서 최신 찜 수 다시 조회
+            int newFavoriteCnt = postRepository.findById(postId)
+                    .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다."))
+                    .getFavoriteCnt();
+
+            return new FavoriteResponseDTO(post.getId(), false, newFavoriteCnt,
+                    String.format("'%s' 찜 해제 완료", post.getTitle()));
         } else {
+            // 찜 등록
             try {
-                favoritePostRepository.save(FavoritePost.builder().member(member).post(post).build());
+                favoritePostRepository.save(FavoritePost.builder()
+                        .member(member)
+                        .post(post)
+                        .build());
+
                 postRepository.increaseFavoriteCnt(postId);
-                return new FavoriteResponseDTO(post.getId(), true, post.getFavoriteCnt(), String.format("'%s' 찜 등록 완료", post.getTitle()));
+
+                // DB에서 최신 찜 수 다시 조회
+                int newFavoriteCnt = postRepository.findById(postId)
+                        .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다."))
+                        .getFavoriteCnt();
+
+                return new FavoriteResponseDTO(post.getId(), true, newFavoriteCnt,
+                        String.format("'%s' 찜 등록 완료", post.getTitle()));
             } catch (Exception e) {
                 throw new ServiceException("CONFLICT", "이미 찜한 게시글입니다.");
             }
         }
-
     }
+
 
     //------------------------------------------------------------------
 
