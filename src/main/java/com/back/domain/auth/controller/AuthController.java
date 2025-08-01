@@ -13,8 +13,11 @@ import com.back.global.rsData.ResultCode;
 import com.back.global.rsData.RsData;
 import com.back.global.security.auth.MemberDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,6 +30,12 @@ public class AuthController {
 
     private final MemberService memberService;
     private final AuthService authService;
+    
+    @Value("${jwt.access-token-validity}")
+    private long accessTokenValidity;
+    
+    @Value("${jwt.refresh-token-validity}")
+    private long refreshTokenValidity;
 
     // 회원가입 API
     @PostMapping("/signup")
@@ -39,9 +48,28 @@ public class AuthController {
     // 로그인 API
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다.")
-    public ResponseEntity<RsData<MemberLoginResponse>> login(@Valid @RequestBody MemberLoginRequest request) {
-        MemberLoginResponse response = authService.login(request);
-        return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "로그인 성공", response));
+    public ResponseEntity<RsData<MemberLoginResponse>> login(
+            @Valid @RequestBody MemberLoginRequest request,
+            HttpServletResponse response) {
+        MemberLoginResponse loginResponse = authService.login(request);
+        
+        // AccessToken을 쿠키로 설정 (자동 전송용)
+        Cookie accessTokenCookie = new Cookie("accessToken", loginResponse.accessToken());
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setHttpOnly(false); // JavaScript에서 접근 가능하도록 false
+        accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
+        accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
+        response.addCookie(accessTokenCookie);
+        
+        // RefreshToken을 HttpOnly 쿠키로 설정 (보안용)
+        Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.refreshToken());
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
+        refreshTokenCookie.setMaxAge((int) (refreshTokenValidity / 1000)); // application.yml과 일치
+        response.addCookie(refreshTokenCookie);
+        
+        return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "로그인 성공", loginResponse));
     }
 
     // 로그인 사용자 정보 조회 API
@@ -64,7 +92,9 @@ public class AuthController {
     // 로그아웃 API
     @PostMapping("/logout")
     @Operation(summary = "로그아웃", description = "현재 로그인된 사용자의 refresh 토큰을 삭제합니다.")
-    public ResponseEntity<RsData<Void>> logout(Authentication authentication) {
+    public ResponseEntity<RsData<Void>> logout(
+            Authentication authentication,
+            HttpServletResponse response) {
         if (authentication == null || !(authentication.getPrincipal() instanceof MemberDetails)) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
@@ -75,14 +105,45 @@ public class AuthController {
         Member member = memberDetails.getMember();
         authService.logout(member);
 
+        // AccessToken 쿠키 삭제
+        Cookie accessTokenCookie = new Cookie("accessToken", "");
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+        response.addCookie(accessTokenCookie);
+        
+        // RefreshToken 쿠키 삭제
+        Cookie refreshTokenCookie = new Cookie("refreshToken", "");
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+
         return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "로그아웃 성공", null));
     }
 
     // Access Token 재발급 API
     @PostMapping("/reissue")
     @Operation(summary = "AccessToken 재발급", description = "RefreshToken으로 AccessToken을 재발급 받습니다.")
-    public ResponseEntity<RsData<TokenReissueResponse>> reissue(@Valid @RequestBody TokenReissueRequest request) {
-        TokenReissueResponse response = authService.reissueAccessToken(request);
-        return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "토큰 재발급 성공", response));
+    public ResponseEntity<RsData<TokenReissueResponse>> reissue(
+            @Valid @RequestBody TokenReissueRequest request,
+            HttpServletResponse response) {
+        TokenReissueResponse reissueResponse = authService.reissueAccessToken(request);
+        
+        // 새로운 AccessToken을 쿠키에 설정
+        Cookie accessTokenCookie = new Cookie("accessToken", reissueResponse.accessToken());
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setHttpOnly(false); // JavaScript에서 접근 가능하도록 false
+        accessTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
+        accessTokenCookie.setMaxAge((int) (accessTokenValidity / 1000)); // application.yml과 일치
+        response.addCookie(accessTokenCookie);
+        
+        // 새로운 RefreshToken을 쿠키에 설정
+        Cookie refreshTokenCookie = new Cookie("refreshToken", reissueResponse.refreshToken());
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false); // 개발환경에서는 false, 프로덕션에서는 true
+        refreshTokenCookie.setMaxAge((int) (refreshTokenValidity / 1000)); // application.yml과 일치
+        response.addCookie(refreshTokenCookie);
+        
+        return ResponseEntity.ok(new RsData<>(ResultCode.SUCCESS, "토큰 재발급 성공", reissueResponse));
     }
 }
