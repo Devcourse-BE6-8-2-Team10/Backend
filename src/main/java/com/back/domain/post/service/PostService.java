@@ -119,8 +119,24 @@ public class PostService {
         }
     }
 
+    //찜 목록 조회
+    @Transactional(readOnly = true)
+    public RsData<List<PostListDTO>> getMyFavoritePosts() {
+        Member member = getCurrentMemberOrThrow();
+
+        List<FavoritePost> favoritePosts = favoritePostRepository.findByMember(member);
+
+        List<PostListDTO> result = favoritePosts.stream()
+                .map(fp -> new PostListDTO(fp.getPost()))
+                .toList();
+
+        return new RsData<>("SUCCESS", "찜한 게시글 목록 조회 성공", result);
+    }
+
+
     //------------------------------------------------------------------
 
+    //로그인 필요 검증
     private Member getCurrentMemberOrThrow() {
         Member member = rq.getMember();
         if (member == null) {
@@ -134,6 +150,7 @@ public class PostService {
                 .orElseThrow(() -> new ServiceException("NOT_FOUND", "게시글이 존재하지 않습니다."));
     }
 
+    //찜 기능 락
     private Post getPostForUpdateOrThrow(Long postId) {
         return postRepository.findByIdForUpdate(postId)
                 .orElseThrow(() -> new ServiceException("NOT_FOUND", "오류 입니다."));
