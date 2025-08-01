@@ -73,57 +73,31 @@ public class PostService {
                 .toList();
     }
 
-    //찜 등록 및 해제
     @Transactional
     public FavoriteResponseDTO toggleFavorite(Long postId) {
         Member member = getCurrentMemberOrThrow();
         Post post = getPostForUpdateOrThrow(postId);
 
-        // 본인 게시글 찜 금지
         if (post.getMember().equals(member)) {
-            return new FavoriteResponseDTO(
-                    post.getId(),
-                    false,
-                    post.getFavoriteCnt(),
-                    "자신의 게시글은 찜할 수 없습니다."
-            );
+            return new FavoriteResponseDTO(post.getId(), false, post.getFavoriteCnt(), "자신의 게시글은 찜할 수 없습니다.");
         }
 
-        // 찜 여부 확인
         boolean alreadyLiked = favoritePostRepository.existsByMemberAndPost(member, post);
 
         if (alreadyLiked) {
-            // 찜 해제
             favoritePostRepository.deleteByMemberAndPost(member, post);
-            post.decreaseFavoriteCnt();
-            return new FavoriteResponseDTO(
-                    post.getId(),
-                    false,
-                    post.getFavoriteCnt(),
-                    String.format("'%s' 찜 해제 완료", post.getTitle())
-            );
+            postRepository.decreaseFavoriteCnt(postId);
+            return new FavoriteResponseDTO(post.getId(), false, post.getFavoriteCnt(), String.format("'%s' 찜 해제 완료", post.getTitle()));
         } else {
             try {
-                // 찜 등록
-                FavoritePost favoritePost = FavoritePost.builder()
-                        .member(member)
-                        .post(post)
-                        .build();
-
-                favoritePostRepository.save(favoritePost);
-                post.increaseFavoriteCnt();
-
-                return new FavoriteResponseDTO(
-                        post.getId(),
-                        true,
-                        post.getFavoriteCnt(),
-                        String.format("'%s' 찜 등록 완료", post.getTitle())
-                );
+                favoritePostRepository.save(FavoritePost.builder().member(member).post(post).build());
+                postRepository.increaseFavoriteCnt(postId);
+                return new FavoriteResponseDTO(post.getId(), true, post.getFavoriteCnt(), String.format("'%s' 찜 등록 완료", post.getTitle()));
             } catch (Exception e) {
-                // 유니크 제약 위반 등으로 예외 발생 시
                 throw new ServiceException("CONFLICT", "이미 찜한 게시글입니다.");
             }
         }
+
     }
 
     //------------------------------------------------------------------

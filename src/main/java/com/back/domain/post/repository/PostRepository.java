@@ -6,8 +6,9 @@ import com.back.domain.post.entity.Post.Status;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 키워드 검색 (사용할지 말지 모름)
     @Query("SELECT p FROM Post p WHERE p.title LIKE CONCAT('%', :keyword, '%') OR p.description LIKE CONCAT('%', :keyword, '%')")
     List<Post> searchByKeyword(String keyword);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.favoriteCnt = p.favoriteCnt + 1 WHERE p.id = :id")
+    void increaseFavoriteCnt(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.favoriteCnt = p.favoriteCnt - 1 WHERE p.id = :id AND p.favoriteCnt > 0")
+    void decreaseFavoriteCnt(@Param("id") Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Post p WHERE p.id = :id")

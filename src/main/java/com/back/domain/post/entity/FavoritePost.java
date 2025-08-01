@@ -15,10 +15,6 @@ import lombok.*;
 @Builder
 public class FavoritePost extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     // Member ID(외래키)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
