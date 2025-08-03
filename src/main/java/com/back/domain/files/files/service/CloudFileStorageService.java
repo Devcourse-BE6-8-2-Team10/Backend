@@ -6,17 +6,20 @@ import com.google.cloud.storage.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("prod") // 프로덕션 환경에서만 이 서비스가 활성화되도록 설정
+@Profile("dev") // 프로덕션 환경에서만 이 서비스가 활성화되도록 설정
 public class CloudFileStorageService implements FileStorageService {
     // 클라우드 스토리지 버킷 이름 설정 (application.yml에서 주입)
     @Value("${GCP_BUCKET_NAME}")
@@ -85,6 +88,15 @@ public class CloudFileStorageService implements FileStorageService {
             }
         } catch (Exception e) {
             throw new RuntimeException("클라우드 스토리지 파일 삭제 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Override
+    public Resource loadFileAsResource(String fileUrl) {
+        try {
+            return new UrlResource(fileUrl);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("파일 URL 형식이 잘못되었습니다: " + fileUrl, e);
         }
     }
 
