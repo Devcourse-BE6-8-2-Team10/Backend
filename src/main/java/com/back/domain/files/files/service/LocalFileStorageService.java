@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("prod")
+@Profile("dev")
 public class LocalFileStorageService implements FileStorageService {
 
     @Value("${file.upload-dir}")
