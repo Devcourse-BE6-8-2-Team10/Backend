@@ -187,7 +187,7 @@ public class PostService {
     // 찜 기능 시 동기화 문제 처리 락
     private Post getPostForUpdateOrThrow(Long postId) {
         return postRepository.findByIdForUpdate(postId)
-                .orElseThrow(() -> new ServiceException("404", "오류 입니다."));
+                .orElseThrow(() -> new ServiceException("404", "게시글이 존재하지 않습니다."));
     }
 
 }
