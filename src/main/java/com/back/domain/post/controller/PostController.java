@@ -30,6 +30,14 @@ public class PostController {
         return ResponseEntity.created(location).body(result);
     }
 
+    @Operation(summary = "게시글 삭제")
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<RsData<String>> deletePost(@PathVariable Long postId) {
+        RsData<String> result = postService.deletePost(postId);
+        return ResponseEntity.ok(result);
+    }
+
+
     //게시글 목록 조회
     @Operation(summary = "게시글 목록 조회")
     @GetMapping

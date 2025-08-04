@@ -49,6 +49,23 @@ public class PostService {
         return new PostDetailDTO(saved, false);
     }
 
+    @Transactional
+    public RsData<String> deletePost(Long postId) {
+        Member member = getCurrentMemberOrThrow();
+        Post post = getPostOrThrow(postId);
+
+        // 본인 게시글인지 확인
+        if (!post.getMember().getId().equals(member.getId())) {
+            throw new ServiceException("FORBIDDEN", "자신의 게시글만 삭제할 수 있습니다.");
+        }
+
+        // 게시글 삭제
+        postRepository.delete(post);
+
+        return new RsData<>("SUCCESS", "게시글 삭제 완료", null);
+    }
+
+
     //게시글 목록 조회
     @Transactional(readOnly = true)
     public List<PostListDTO> getPostList() {
