@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로들
                         .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/reissue",
-                                            "/api/posts", "/api/posts/popular", "/api/posts/{postId}").permitAll()
+                                            "/api/posts", "/api/posts/popular", "/api/posts/{postId}", "/files/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
                         // Swagger 관련 경로들 - 더 구체적으로 설정
@@ -89,8 +89,8 @@ public class SecurityConfig {
         // 허용할 오리진 설정 (개발 환경)
         configuration.setAllowedOriginPatterns(List.of("http://localhost:3000"));
         
-        // 허용할 HTTP 메서드 설정
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // 허용할 HTTP 메서드 설정 (PATCH 추가)
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         
         // 허용할 헤더 설정
         configuration.setAllowedHeaders(Arrays.asList("*"));
