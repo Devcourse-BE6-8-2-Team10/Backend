@@ -4,15 +4,14 @@
 #WORKDIR /app
 #COPY gradlew .
 #COPY gradle gradle
-#COPY build.gradle .
-#COPY settings.gradle .
+#COPY build.gradle.kts .
+#COPY settings.gradle.kts .
+#RUN chmod +x ./gradlew
 #RUN ./gradlew bootJar --no-daemon
 #
 ## 2. 실제 실행을 위한 최종 단계
-#FROM openjdk:21-jre-slim
+#FROM eclipse-temurin:21-jre-jammy
 #WORKDIR /app
-## 빌드 단계에서 만들어진 JAR 파일만 복사
 #COPY --from=builder /app/build/libs/*.jar app.jar
-## 8080 포트로 서비스 실행
 #EXPOSE 8080
 #CMD ["java", "-jar", "app.jar"]

@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-@Profile("dev")
+@Profile({"dev", "prod"})
 @Component
 @RequiredArgsConstructor
 @Slf4j
