@@ -7,6 +7,7 @@ spring:
     hibernate:
       ddl-auto: create     # DB 초기화 전략 (none, create, create-drop, update, validate)
     properties:
+      dialect: org.hibernate.dialect.H2Dialect
       hibernate:
         format_sql: true      # 쿼리 로그 포맷 (정렬)
         show_sql: true        # 쿼리 로그 출력
