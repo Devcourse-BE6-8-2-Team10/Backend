@@ -1,6 +1,6 @@
 package com.back.domain.trade.controller;
 
-import com.back.domain.files.files.service.FilesService;
+import com.back.domain.files.files.service.FileStorageService;
 import com.back.domain.trade.dto.TradeDto;
 import com.back.domain.trade.entity.Trade;
 import com.back.domain.trade.repository.TradeRepository;
@@ -13,13 +13,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +50,8 @@ class AdmTradeControllerTest {
     private TradeRepository tradeRepository;
     @Autowired
     private Rq rq;
-    @MockBean
-    private FilesService filesService;
+    @MockitoBean
+    private FileStorageService fileStorageService;
 
     @Test
     @WithUserDetails("admin@admin.com")
