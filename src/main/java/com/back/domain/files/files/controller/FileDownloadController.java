@@ -22,9 +22,9 @@ public class FileDownloadController {
     private final FileStorageService fileStorageService;
 
     // 파일 다운로드 API
-    @GetMapping("/{subFolder}/{fileName:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String subFolder, @PathVariable String fileName, HttpServletRequest request) {
-        String fileUrl = "/files/" + subFolder + "/" + fileName;
+    @GetMapping("/**")
+    public ResponseEntity<Resource> downloadFile(HttpServletRequest request) {
+        String fileUrl = request.getRequestURI();
         Resource resource = fileStorageService.loadFileAsResource(fileUrl);
 
         String contentType = null;
