@@ -50,6 +50,26 @@ public class PostService {
         return new PostDetailDTO(saved, false);
     }
 
+    //게시글 수정
+    @Transactional
+    public PostDetailDTO updatePost(Long postId, PostRequestDTO dto) {
+        Member member = getCurrentMemberOrThrow();
+        Post post = getPostOrThrow(postId);
+
+        // 본인 게시글인지 확인
+        if (!post.getMember().getId().equals(member.getId())) {
+            throw new ServiceException("403", "자신의 게시글만 수정할 수 있습니다.");
+        }
+
+        // 카테고리 예외처리
+        Post.Category category = Post.Category.from(dto.category())
+                .orElseThrow(() -> new ServiceException("400", "유효하지 않은 카테고리입니다."));
+
+        // 수정 값 적용
+        post.updatePost(dto.title(), dto.description(), category, dto.price());
+        return new PostDetailDTO(post, favoritePostRepository.existsByMemberAndPost(member, post));
+    }
+
     // 게시글 삭제
     @Transactional
     public RsData<String> deletePost(Long postId) {
