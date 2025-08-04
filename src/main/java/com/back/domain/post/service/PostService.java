@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -75,12 +74,10 @@ public class PostService {
     public RsData<String> deletePost(Long postId) {
         Member member = getCurrentMemberOrThrow();
 
-        Optional<Post> optionalPost = postRepository.findById(postId);
-        if (optionalPost.isEmpty()) {
-            throw new ServiceException("404", "이미 삭제되었거나 존재하지 않는 게시글입니다.");
-        }
+        //예외처리
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ServiceException("404", "이미 삭제되었거나 존재하지 않는 게시글입니다."));
 
-        Post post = getPostOrThrow(postId);
         // 본인 게시글인지 확인
         if (!post.getMember().getId().equals(member.getId())) {
             throw new ServiceException("403", "자신의 게시글만 삭제할 수 있습니다.");
